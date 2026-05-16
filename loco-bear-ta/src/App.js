@@ -58,28 +58,89 @@ async function fetchSheetData(sheetId, sheetName = "Sheet1") {
   const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
   const res = await fetch(url);
   const text = await res.text();
-  const json = JSON.parse(text.substring(47, text.length - 2));
-  const cols = json.table.cols.map(c => c.label);
-  return json.table.rows.map(row =>
-    Object.fromEntries(cols.map((col, i) => [col, row.c[i]?.v ?? ""]))
-  );
+  const startIdx = text.indexOf("{");
+  const endIdx = text.lastIndexOf("}");
+  const json = JSON.parse(text.substring(startIdx, endIdx + 1));
+  const cols = json.table.cols.map(c => (c.label || "").trim());
+  const rows = json.table.rows
+    .filter(row => row && row.c && row.c.some(cell => cell && cell.v !== null && cell.v !== ""))
+    .map(row => Object.fromEntries(cols.map((col, i) => [col, row.c[i]?.v ?? row.c[i]?.f ?? ""])));
+  return rows;
+}
+
+function inferStepFromRow(row) {
+  // Infer TA process step (1-7) from your sheet columns
+  const positionClosedDate = row["Position close date / Offer Letter release date"] || row["Position close date"] || "";
+  const offerCandidate = row["Offer Candidate name"] || "";
+  const doj = row["DOJ"] || "";
+  const signLetter = row["Received Sign Letter Date"] || "";
+  const openPos = row["Open position"];
+  const action = (row["Action"] || "").toLowerCase();
+
+  if (doj && String(doj).trim()) return 7; // Position Closed — candidate joined
+  if (signLetter && String(signLetter).trim()) return 7; // Sign letter received
+  if (positionClosedDate && String(positionClosedDate).trim()) return 6; // Offer released
+  if (offerCandidate && String(offerCandidate).trim()) return 6; // Offer candidate named
+  if (action.includes("final") || action.includes("offer")) return 5; // Feedback / final stage
+  if (action.includes("interview") || action.includes("round")) return 4; // In interviews
+  if (action.includes("screen") || action.includes("profile")) return 3; // Screening
+  if (openPos && parseInt(openPos) > 0) return 2; // TA Tracker updated
+  return 1; // Just raised
+}
+
+function inferStatusFromStep(step, row) {
+  const action = (row["Action"] || "").toLowerCase();
+  if (step === 7) return "closed";
+  if (step === 6) return "offer";
+  if (step === 5) return "final";
+  if (step === 4) return "interview";
+  if (step === 3) return "screening";
+  if (step === 2) return "tracker";
+  return "new";
+}
+
+function calcDaysOpen(row) {
+  const dateStr = row["Position receive date"] || row["Position Receive Date"] || "";
+  if (!dateStr) return 0;
+  try {
+    // Handle Google Sheets date serial number
+    if (typeof dateStr === "number") {
+      const msPerDay = 86400000;
+      const excelEpoch = new Date(1899, 11, 30);
+      const date = new Date(excelEpoch.getTime() + dateStr * msPerDay);
+      return Math.floor((new Date() - date) / msPerDay);
+    }
+    const date = new Date(dateStr);
+    if (isNaN(date)) return 0;
+    return Math.floor((new Date() - date) / 86400000);
+  } catch { return 0; }
 }
 
 function parseSheetToPositions(rows) {
   return rows.map((row, i) => {
-    const step = parseInt(row["Current Step"] || row["Step"] || 1) || 1;
-    const daysOpen = parseInt(row["Days Open"] || row["Days"] || 0) || 0;
-    const rawStatus = (row["Status"] || "new").toLowerCase().replace(/\s+/g, "");
+    const step = inferStepFromRow(row);
+    const daysOpen = calcDaysOpen(row);
+    const status = inferStatusFromStep(step, row);
+    const openPos = parseInt(row["Open position"] || 0) || 0;
+
     return {
       id: i + 1,
-      role: row["Role"] || row["Position"] || row["Designation"] || "",
-      centre: row["Centre"] || row["Location"] || row["Center"] || "Unknown",
-      step, daysOpen,
-      hr: row["HR Owner"] || row["Centre HR"] || row["HR"] || "Unknown HR",
-      status: STATUS_CONFIG[rawStatus] ? rawStatus : "new",
-      priority: daysOpen > 14 ? "high" : daysOpen > 7 ? "medium" : "low",
+      role: (row["Role"] || row["Role "] || "").trim(),
+      centre: (row["Centers"] || row["Centre"] || "Unknown").trim(),
+      step,
+      daysOpen,
+      hr: (row["Ownership"] || row["Lead"] || row["Hiring Manager"] || "Unknown HR").trim(),
+      status,
+      priority: daysOpen > 21 ? "high" : daysOpen > 10 ? "medium" : "low",
+      openPositions: openPos,
+      totalReq: parseInt(row["Total Requirements"] || 1) || 1,
+      positionClosed: parseInt(row["Position Closed"] || 0) || 0,
+      expectedClosure: row["Expected Closure Date"] || "",
+      candidate: row["Offer Candidate name"] || "",
+      hiringManager: row["Hiring Manager"] || "",
+      uniqueId: row["Unique TA ID"] || "",
     };
-  }).filter(p => p.role);
+  }).filter(p => p.role && p.role !== "");
 }
 
 const S = {
