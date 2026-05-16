@@ -173,7 +173,17 @@ function parseSheetToPositions(rows) {
   }).filter(p => {
     if (!p.role || p.role === "") return false;
     const action = (p._action || "").toLowerCase().trim();
-    return action === "in progress" || action === "inprogress";
+    // Keep "In Progress" rows for open positions
+    // AND keep offer/joined rows for ratio calculation
+    return (
+      action === "in progress" ||
+      action === "inprogress" ||
+      action === "offer" ||
+      action === "offered" ||
+      action === "joined" ||
+      action === "closed" ||
+      (p.offerCandidate && p.offerCandidate.toString().trim() !== "")
+    );
   });
 }
 
