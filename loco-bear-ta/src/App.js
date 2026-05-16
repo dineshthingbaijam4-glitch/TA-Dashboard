@@ -734,7 +734,7 @@ const DEFAULT_CONFIG = { taTrackerUrl: "", taTrackerSheet: "Sheet1", candidateTr
 export default function App() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [config, setConfig] = useState(() => { try { return JSON.parse(localStorage.getItem("ta_config")) || DEFAULT_CONFIG; } catch { return DEFAULT_CONFIG; } });
-  const [data, setData] = useState(MOCK_DATA);
+  const [data, setData] = useState({   openPositions: [],   compliance: [],   todayInterviews: [],   alerts: [] });
   const [isLive, setIsLive] = useState(false);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
