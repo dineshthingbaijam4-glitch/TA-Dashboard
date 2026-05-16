@@ -136,6 +136,7 @@ function parseSheetToPositions(rows) {
       totalReq: parseInt(row["Total Requirements"] || 1) || 1,
       positionClosed: parseInt(row["Position Closed"] || 0) || 0,
       expectedClosure: row["Expected Closure Date"] || "",
+      _action: row["Action"] || "",
       offerCandidate: row["Offer Candidate name"] || "",
       yetToJoin: parseInt(row["Yet to join"] || row["Yet to Join"] || 0) || 0,
       hiringManager: row["Hiring Manager"] || "",
@@ -144,7 +145,12 @@ function parseSheetToPositions(rows) {
       payscaleMax: row["Payscale Maximum"] || "",
       doj: row["DOJ"] || "",
     };
-  }).filter(p => p.role && p.role !== "");
+  }).filter(p => {
+    if (!p.role || p.role === "") return false;
+    // Only include rows where Action = "In Progress" (case-insensitive)
+    const action = (p._action || "").toLowerCase().trim();
+    return action === "in progress" || action === "inprogress";
+  });
 }
 
 const S = {
