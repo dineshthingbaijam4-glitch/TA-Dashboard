@@ -173,13 +173,7 @@ function parseSheetToPositions(rows) {
   }).filter(p => {
     if (!p.role || p.role === "") return false;
     const action = (p._action || "").toLowerCase().trim();
-    // "In Progress" = active open positions
-    // "Position Closed" = offer/joined rows needed for ratio & yet to join
-    return (
-      action === "in progress" ||
-      action === "inprogress" ||
-      action === "position closed"
-    );
+    return action === "in progress" || action === "inprogress";
   });
 }
 
@@ -422,16 +416,11 @@ function CentreBreakdown({ positions }) {
 function DashboardTab({ data, isLive, onOpenModal }) {
   const today = new Date();
 
-  const yetToJoin = data.openPositions.filter(p => {
-    const action = (p._action || "").toLowerCase().trim();
-    return (
-      action === "position closed" &&
-      p.offerCandidate && p.offerCandidate.toString().trim() !== "" &&
-      p.doj && p.doj.toString().trim() !== "" &&
-      p.joiningStatus.toLowerCase() !== "joined" &&
-      p.joiningStatus.toLowerCase() !== "not joined"
-    );
-  });
+  const yetToJoin = data.openPositions.filter(p =>
+    p.offerCandidate && p.offerCandidate.toString().trim() !== "" &&
+    p.doj && p.doj.toString().trim() !== "" &&
+    p.joiningStatus.trim() === ""
+  );
 
   const overduePositions = data.openPositions.filter(p => {
     if (!p.expectedClosure) return false;
@@ -476,14 +465,10 @@ function DashboardTab({ data, isLive, onOpenModal }) {
           onClick={() => onOpenModal("Active Positions", data.openPositions.filter(p => p.status !== "closed"))}
         />
         {(() => {
-          const offered    = data.openPositions.filter(p => {
-            const action = (p._action || "").toLowerCase().trim();
-            return (
-              action === "position closed" &&
-              p.offerCandidate && p.offerCandidate.toString().trim() !== "" &&
-              p.doj && p.doj.toString().trim() !== ""
-            );
-          });
+          const offered    = data.openPositions.filter(p =>
+            p.offerCandidate && p.offerCandidate.toString().trim() !== "" &&
+            p.doj && p.doj.toString().trim() !== ""
+          );
           const joined     = offered.filter(p => p.joiningStatus.toLowerCase() === "joined");
           const notJoining = offered.filter(p => p.joiningStatus.toLowerCase() === "not joined");
           const pending    = offered.filter(p => p.joiningStatus.trim() === "");
@@ -500,31 +485,20 @@ function DashboardTab({ data, isLive, onOpenModal }) {
         })()}
         <StatCard
           label="Yet to Join" value={(() => {
-            const offered = data.openPositions.filter(p => {
-              const action = (p._action || "").toLowerCase().trim();
-              return (
-                action === "position closed" &&
-                p.offerCandidate && p.offerCandidate.toString().trim() !== "" &&
-                p.doj && p.doj.toString().trim() !== "" &&
-                p.joiningStatus.toLowerCase() !== "joined" &&
-                p.joiningStatus.toLowerCase() !== "not joined"
-              );
-            });
-            return offered.length;
+            const offered = data.openPositions.filter(p =>
+              p.offerCandidate && p.offerCandidate.toString().trim() !== "" &&
+              p.doj && p.doj.toString().trim() !== ""
+            );
+            return offered.filter(p => p.joiningStatus.trim() === "").length;
           })()}
           sub="offer & DOJ set, status pending" color="#8b5cf6" icon="🕐"
           clickable={true}
           onClick={() => {
-            const pending = data.openPositions.filter(p => {
-              const action = (p._action || "").toLowerCase().trim();
-              return (
-                action === "position closed" &&
-                p.offerCandidate && p.offerCandidate.toString().trim() !== "" &&
-                p.doj && p.doj.toString().trim() !== "" &&
-                p.joiningStatus.toLowerCase() !== "joined" &&
-                p.joiningStatus.toLowerCase() !== "not joined"
-              );
-            });
+            const pending = data.openPositions.filter(p =>
+              p.offerCandidate && p.offerCandidate.toString().trim() !== "" &&
+              p.doj && p.doj.toString().trim() !== "" &&
+              p.joiningStatus.trim() === ""
+            );
             pending.length > 0 && onOpenModal("Yet to Join", pending);
           }}
         />
