@@ -62,7 +62,7 @@ function extractSheetId(url) {
 
 async function fetchSheetData(sheetId, sheetName = "Sheet1") {
   // CSV export bypasses any active filters — always returns all rows
-  const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&sheet=${encodeURIComponent(sheetName)}`;
+  const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}&headers=1`;
   const res = await fetch(csvUrl);
   const text = await res.text();
 
@@ -168,6 +168,7 @@ function parseSheetToPositions(rows) {
       payscaleMin: row["Payscale Minimum"] || "",
       payscaleMax: row["Payscale Maximum"] || "",
       doj: row["DOJ"] || "",
+      joiningStatus: (row["Joining Status"] || "").toString().trim(),
     };
   }).filter(p => {
     if (!p.role || p.role === "") return false;
@@ -415,7 +416,11 @@ function CentreBreakdown({ positions }) {
 function DashboardTab({ data, isLive, onOpenModal }) {
   const today = new Date();
 
-  const yetToJoin = data.openPositions.filter(p => p.status === "offer" || (p.yetToJoin && parseInt(p.yetToJoin) > 0));
+  const yetToJoin = data.openPositions.filter(p =>
+    p.offerCandidate && p.offerCandidate.toString().trim() !== "" &&
+    p.doj && p.doj.toString().trim() !== "" &&
+    p.joiningStatus.trim() === ""
+  );
 
   const overduePositions = data.openPositions.filter(p => {
     if (!p.expectedClosure) return false;
@@ -452,18 +457,50 @@ function DashboardTab({ data, isLive, onOpenModal }) {
       )}
 
       {/* ── Stat Cards ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "14px", marginBottom: "24px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: "14px", marginBottom: "24px" }}>
         <StatCard
           label="Active Open Positions" value={data.openPositions.filter(p => p.status !== "closed").length}
           sub="across all centres" color="#6366f1" icon="📋"
           clickable={true}
           onClick={() => onOpenModal("Active Positions", data.openPositions.filter(p => p.status !== "closed"))}
         />
+        {(() => {
+          const offered    = data.openPositions.filter(p =>
+            p.offerCandidate && p.offerCandidate.toString().trim() !== "" &&
+            p.doj && p.doj.toString().trim() !== ""
+          );
+          const joined     = offered.filter(p => p.joiningStatus.toLowerCase() === "joined");
+          const notJoining = offered.filter(p => p.joiningStatus.toLowerCase() === "not joined");
+          const pending    = offered.filter(p => p.joiningStatus.trim() === "");
+          const ratio      = offered.length > 0 ? Math.round((joined.length / offered.length) * 100) : 0;
+          return (
+            <StatCard
+              label="Offer → Joining Ratio" value={`${ratio}%`}
+              sub={`${joined.length} joined · ${notJoining.length} not joining · ${pending.length} pending`}
+              color="#06b6d4" icon="🤝"
+              clickable={offered.length > 0}
+              onClick={() => offered.length > 0 && onOpenModal("Offer → Joining", offered)}
+            />
+          );
+        })()}
         <StatCard
-          label="Yet to Join" value={yetToJoin.length}
-          sub="offer accepted, awaiting DOJ" color="#8b5cf6" icon="🕐"
-          clickable={yetToJoin.length > 0}
-          onClick={() => yetToJoin.length > 0 && onOpenModal("Yet to Join", yetToJoin)}
+          label="Yet to Join" value={(() => {
+            const offered = data.openPositions.filter(p =>
+              p.offerCandidate && p.offerCandidate.toString().trim() !== "" &&
+              p.doj && p.doj.toString().trim() !== ""
+            );
+            return offered.filter(p => p.joiningStatus.trim() === "").length;
+          })()}
+          sub="offer & DOJ set, status pending" color="#8b5cf6" icon="🕐"
+          clickable={true}
+          onClick={() => {
+            const pending = data.openPositions.filter(p =>
+              p.offerCandidate && p.offerCandidate.toString().trim() !== "" &&
+              p.doj && p.doj.toString().trim() !== "" &&
+              p.joiningStatus.trim() === ""
+            );
+            pending.length > 0 && onOpenModal("Yet to Join", pending);
+          }}
         />
         <StatCard
           label="Overdue Positions" value={overduePositions.length}
