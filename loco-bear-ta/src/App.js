@@ -62,7 +62,7 @@ function extractSheetId(url) {
 
 async function fetchSheetData(sheetId, sheetName = "Sheet1") {
   // CSV export bypasses any active filters — always returns all rows
-  const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&sheet=${encodeURIComponent(sheetName)}`;
+  const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}&headers=1`;
   const res = await fetch(csvUrl);
   const text = await res.text();
 
@@ -173,16 +173,12 @@ function parseSheetToPositions(rows) {
   }).filter(p => {
     if (!p.role || p.role === "") return false;
     const action = (p._action || "").toLowerCase().trim();
-    // Keep "In Progress" rows for open positions
-    // AND keep offer/joined rows for ratio calculation
+    // "In Progress" = active open positions
+    // "Position Closed" = offer/joined rows needed for ratio & yet to join
     return (
       action === "in progress" ||
       action === "inprogress" ||
-      action === "offer" ||
-      action === "offered" ||
-      action === "joined" ||
-      action === "closed" ||
-      (p.offerCandidate && p.offerCandidate.toString().trim() !== "")
+      action === "position closed"
     );
   });
 }
@@ -426,11 +422,16 @@ function CentreBreakdown({ positions }) {
 function DashboardTab({ data, isLive, onOpenModal }) {
   const today = new Date();
 
-  const yetToJoin = data.openPositions.filter(p =>
-    p.offerCandidate && p.offerCandidate.toString().trim() !== "" &&
-    p.doj && p.doj.toString().trim() !== "" &&
-    p.joiningStatus.trim() === ""
-  );
+  const yetToJoin = data.openPositions.filter(p => {
+    const action = (p._action || "").toLowerCase().trim();
+    return (
+      action === "position closed" &&
+      p.offerCandidate && p.offerCandidate.toString().trim() !== "" &&
+      p.doj && p.doj.toString().trim() !== "" &&
+      p.joiningStatus.toLowerCase() !== "joined" &&
+      p.joiningStatus.toLowerCase() !== "not joined"
+    );
+  });
 
   const overduePositions = data.openPositions.filter(p => {
     if (!p.expectedClosure) return false;
@@ -475,10 +476,14 @@ function DashboardTab({ data, isLive, onOpenModal }) {
           onClick={() => onOpenModal("Active Positions", data.openPositions.filter(p => p.status !== "closed"))}
         />
         {(() => {
-          const offered    = data.openPositions.filter(p =>
-            p.offerCandidate && p.offerCandidate.toString().trim() !== "" &&
-            p.doj && p.doj.toString().trim() !== ""
-          );
+          const offered    = data.openPositions.filter(p => {
+            const action = (p._action || "").toLowerCase().trim();
+            return (
+              action === "position closed" &&
+              p.offerCandidate && p.offerCandidate.toString().trim() !== "" &&
+              p.doj && p.doj.toString().trim() !== ""
+            );
+          });
           const joined     = offered.filter(p => p.joiningStatus.toLowerCase() === "joined");
           const notJoining = offered.filter(p => p.joiningStatus.toLowerCase() === "not joined");
           const pending    = offered.filter(p => p.joiningStatus.trim() === "");
@@ -495,20 +500,31 @@ function DashboardTab({ data, isLive, onOpenModal }) {
         })()}
         <StatCard
           label="Yet to Join" value={(() => {
-            const offered = data.openPositions.filter(p =>
-              p.offerCandidate && p.offerCandidate.toString().trim() !== "" &&
-              p.doj && p.doj.toString().trim() !== ""
-            );
-            return offered.filter(p => p.joiningStatus.trim() === "").length;
+            const offered = data.openPositions.filter(p => {
+              const action = (p._action || "").toLowerCase().trim();
+              return (
+                action === "position closed" &&
+                p.offerCandidate && p.offerCandidate.toString().trim() !== "" &&
+                p.doj && p.doj.toString().trim() !== "" &&
+                p.joiningStatus.toLowerCase() !== "joined" &&
+                p.joiningStatus.toLowerCase() !== "not joined"
+              );
+            });
+            return offered.length;
           })()}
           sub="offer & DOJ set, status pending" color="#8b5cf6" icon="🕐"
           clickable={true}
           onClick={() => {
-            const pending = data.openPositions.filter(p =>
-              p.offerCandidate && p.offerCandidate.toString().trim() !== "" &&
-              p.doj && p.doj.toString().trim() !== "" &&
-              p.joiningStatus.trim() === ""
-            );
+            const pending = data.openPositions.filter(p => {
+              const action = (p._action || "").toLowerCase().trim();
+              return (
+                action === "position closed" &&
+                p.offerCandidate && p.offerCandidate.toString().trim() !== "" &&
+                p.doj && p.doj.toString().trim() !== "" &&
+                p.joiningStatus.toLowerCase() !== "joined" &&
+                p.joiningStatus.toLowerCase() !== "not joined"
+              );
+            });
             pending.length > 0 && onOpenModal("Yet to Join", pending);
           }}
         />
