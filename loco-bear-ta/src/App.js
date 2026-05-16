@@ -62,7 +62,7 @@ function extractSheetId(url) {
 
 async function fetchSheetData(sheetId, sheetName = "Sheet1") {
   // CSV export bypasses any active filters — always returns all rows
-  const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}&headers=1`;
+  const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&sheet=${encodeURIComponent(sheetName)}`;
   const res = await fetch(csvUrl);
   const text = await res.text();
 
