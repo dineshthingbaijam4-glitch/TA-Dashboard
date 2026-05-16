@@ -359,7 +359,7 @@ function SettingsTab({ config, onSave, onTest }) {
   );
 }
 
-function CentreBreakdown({ positions }) {
+function CentreBreakdown({ positions, onOpenModal }) {
   const active = positions.filter(p => p.status !== "closed");
   const total = active.length;
 
@@ -386,7 +386,22 @@ function CentreBreakdown({ positions }) {
         const pct = total > 0 ? Math.round((count / total) * 100) : 0;
         const colour = CENTRE_COLOURS[i % CENTRE_COLOURS.length];
         return (
-          <div key={centre} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 0", borderBottom: i < sorted.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
+          <div 
+            key={centre} 
+            style={{ 
+              display: "flex", 
+              alignItems: "center", 
+              gap: "10px", 
+              padding: "8px 0", 
+              borderBottom: i < sorted.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
+              cursor: "pointer",
+              transition: "background 0.15s",
+              borderRadius: "4px"
+            }}
+            onClick={() => onOpenModal(`Centre: ${centre}`, active.filter(p => p.centre === centre))}
+            onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}
+            onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+          >
             <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: colour, flexShrink: 0 }} />
             <div style={{ fontSize: "11px", color: "#bbb", minWidth: "90px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{centre}</div>
             <div style={{ flex: 1, height: "4px", background: "rgba(255,255,255,0.07)", borderRadius: "2px", overflow: "hidden" }}>
@@ -561,7 +576,7 @@ function DashboardTab({ data, isLive, onOpenModal }) {
 
       {/* ── Centre Breakdown + Role Breakdown ── */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
-        <CentreBreakdown positions={data.openPositions} />
+        <CentreBreakdown positions={data.openPositions} onOpenModal={onOpenModal} />
         <RoleBreakdown positions={data.openPositions} onOpenModal={onOpenModal} />
       </div>
 
