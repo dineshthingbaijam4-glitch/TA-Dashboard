@@ -136,9 +136,13 @@ function parseSheetToPositions(rows) {
       totalReq: parseInt(row["Total Requirements"] || 1) || 1,
       positionClosed: parseInt(row["Position Closed"] || 0) || 0,
       expectedClosure: row["Expected Closure Date"] || "",
-      candidate: row["Offer Candidate name"] || "",
+      offerCandidate: row["Offer Candidate name"] || "",
+      yetToJoin: parseInt(row["Yet to join"] || row["Yet to Join"] || 0) || 0,
       hiringManager: row["Hiring Manager"] || "",
       uniqueId: row["Unique TA ID"] || "",
+      payscaleMin: row["Payscale Minimum"] || "",
+      payscaleMax: row["Payscale Maximum"] || "",
+      doj: row["DOJ"] || "",
     };
   }).filter(p => p.role && p.role !== "");
 }
@@ -174,6 +178,73 @@ function NavItem({ tab, active, onClick }) {
       {tab.label}
       {tab.badge > 0 && <span style={{ marginLeft: "auto", background: "#e85d3a", color: "white", borderRadius: "10px", padding: "1px 6px", fontSize: "9px", fontWeight: "700" }}>{tab.badge}</span>}
     </button>
+  );
+}
+
+
+// ── MODAL ─────────────────────────────────────────────────────────────────────
+function PositionModal({ title, positions, onClose }) {
+  if (!positions) return null;
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }} onClick={onClose}>
+      <div style={{ background: "#13131a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "16px", width: "90%", maxWidth: "900px", maxHeight: "80vh", overflow: "hidden", display: "flex", flexDirection: "column" }} onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <div style={{ padding: "18px 24px", borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <div style={{ fontSize: "15px", fontWeight: "700", color: "#fff", fontFamily: "'Syne',sans-serif" }}>{title}</div>
+            <div style={{ fontSize: "11px", color: "#555", marginTop: "2px" }}>{positions.length} position{positions.length !== 1 ? "s" : ""}</div>
+          </div>
+          <button onClick={onClose} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#888", fontSize: "13px", padding: "6px 12px", cursor: "pointer" }}>✕ Close</button>
+        </div>
+        {/* Table */}
+        <div style={{ overflow: "auto", flex: 1 }}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead style={{ position: "sticky", top: 0, background: "#13131a", zIndex: 1 }}>
+              <tr style={{ background: "rgba(255,255,255,0.04)" }}>
+                {["Role", "Centre", "HR Owner", "Step", "Days Open", "Expected Closure", "Status", "Offer Candidate"].map(h => (
+                  <th key={h} style={{ padding: "10px 14px", textAlign: "left", fontSize: "9px", color: "#444", fontWeight: "600", letterSpacing: "0.08em", textTransform: "uppercase", borderBottom: "1px solid rgba(255,255,255,0.06)", whiteSpace: "nowrap" }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {positions.length === 0 && (
+                <tr><td colSpan={8} style={{ padding: "40px", textAlign: "center", color: "#333" }}>No positions found</td></tr>
+              )}
+              {positions.map((pos, i) => {
+                const sc = STATUS_CONFIG[pos.status] || STATUS_CONFIG.new;
+                const isOverdue = pos.expectedClosure && new Date(pos.expectedClosure) < new Date() && pos.status !== "closed";
+                return (
+                  <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)", background: isOverdue ? "rgba(232,93,58,0.04)" : "transparent" }}
+                    onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}
+                    onMouseLeave={e => e.currentTarget.style.background = isOverdue ? "rgba(232,93,58,0.04)" : "transparent"}>
+                    <td style={{ padding: "12px 14px", fontSize: "12px", fontWeight: "600", color: "#ddd" }}>{pos.role}</td>
+                    <td style={{ padding: "12px 14px", fontSize: "11px", color: "#666" }}>{pos.centre}</td>
+                    <td style={{ padding: "12px 14px", fontSize: "11px", color: "#666" }}>{pos.hr}</td>
+                    <td style={{ padding: "12px 14px" }}>
+                      <div style={{ display: "flex", gap: "2px" }}>
+                        {[1,2,3,4,5,6,7].map(s => <div key={s} style={{ width: "14px", height: "3px", borderRadius: "2px", background: s <= pos.step ? "#e85d3a" : "rgba(255,255,255,0.08)" }} />)}
+                      </div>
+                      <div style={{ fontSize: "9px", color: "#555", marginTop: "3px" }}>Step {pos.step}</div>
+                    </td>
+                    <td style={{ padding: "12px 14px" }}>
+                      <span style={{ fontSize: "12px", fontWeight: "700", color: pos.daysOpen > 14 ? "#e85d3a" : pos.daysOpen > 7 ? "#f59e0b" : "#10b981" }}>{pos.daysOpen}d</span>
+                    </td>
+                    <td style={{ padding: "12px 14px", fontSize: "11px", color: isOverdue ? "#e85d3a" : "#666", fontWeight: isOverdue ? "600" : "400" }}>
+                      {pos.expectedClosure || "—"}
+                      {isOverdue && <span style={{ marginLeft: "5px", fontSize: "9px" }}>⚠ OVERDUE</span>}
+                    </td>
+                    <td style={{ padding: "12px 14px" }}>
+                      <span style={{ padding: "3px 8px", borderRadius: "20px", fontSize: "9px", fontWeight: "700", background: sc.bg, color: sc.color }}>{sc.label}</span>
+                    </td>
+                    <td style={{ padding: "12px 14px", fontSize: "11px", color: "#777" }}>{pos.offerCandidate || "—"}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -269,18 +340,33 @@ function SettingsTab({ config, onSave, onTest }) {
   );
 }
 
-function DashboardTab({ data, isLive }) {
-  const overdueCount = data.compliance.reduce((a, c) => a + c.overdue, 0);
-  const interviewCount = data.openPositions.filter(p => p.step >= 4).length;
+function DashboardTab({ data, isLive, onOpenModal }) {
+  const today = new Date();
+
+  // Yet to Join = positions where offer sent but DOJ not yet passed
+  const yetToJoin = data.openPositions.filter(p => p.status === "offer" || (p.yetToJoin && parseInt(p.yetToJoin) > 0));
+
+  // Overdue = positions past their Expected Closure Date
+  const overduePositions = data.openPositions.filter(p => {
+    if (!p.expectedClosure) return false;
+    const closureDate = new Date(p.expectedClosure);
+    return !isNaN(closureDate) && closureDate < today && p.status !== "closed";
+  });
+
   const avgCompliance = Math.round(data.compliance.reduce((a, c) => a + c.percent, 0) / data.compliance.length);
-  const StatCard = ({ label, value, sub, color, icon }) => (
-    <div style={{ ...S.card, borderTop: `3px solid ${color}` }}>
+
+  const StatCard = ({ label, value, sub, color, icon, onClick, clickable }) => (
+    <div onClick={onClick} style={{ ...S.card, borderTop: `3px solid ${color}`, cursor: clickable ? "pointer" : "default", transition: "transform 0.15s, box-shadow 0.15s" }}
+      onMouseEnter={e => { if(clickable) { e.currentTarget.style.transform="translateY(-2px)"; e.currentTarget.style.boxShadow=`0 8px 24px ${color}22`; }}}
+      onMouseLeave={e => { e.currentTarget.style.transform="translateY(0)"; e.currentTarget.style.boxShadow="none"; }}>
       <div style={{ fontSize: "20px", marginBottom: "10px" }}>{icon}</div>
       <div style={{ fontSize: "28px", fontWeight: "800", color, fontFamily: "'Syne',sans-serif" }}>{value}</div>
       <div style={{ fontSize: "11px", color: "#888", marginTop: "5px" }}>{label}</div>
       <div style={{ fontSize: "10px", color: "#444", marginTop: "2px" }}>{sub}</div>
+      {clickable && <div style={{ fontSize: "9px", color: color, marginTop: "8px", opacity: 0.7 }}>Click to view →</div>}
     </div>
   );
+
   return (
     <div>
       {isLive && (
@@ -290,22 +376,44 @@ function DashboardTab({ data, isLive }) {
         </div>
       )}
       {!isLive && (
-        <div style={{ display: "inline-flex", alignItems: "center", gap: "7px", padding: "6px 14px", borderRadius: "20px", marginBottom: "20px", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", cursor: "pointer" }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: "7px", padding: "6px 14px", borderRadius: "20px", marginBottom: "20px", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)" }}>
           <span style={{ fontSize: "11px", color: "#f59e0b", fontWeight: "600" }}>⚡ Showing demo data — go to Settings to connect your Google Sheets</span>
         </div>
       )}
+
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "14px", marginBottom: "24px" }}>
-        <StatCard label="Open Positions" value={data.openPositions.length} sub="across all centres" color="#6366f1" icon="📋" />
-        <StatCard label="In Interview Stage" value={interviewCount} sub="active pipeline" color="#8b5cf6" icon="🎯" />
-        <StatCard label="Overdue Updates" value={overdueCount} sub="needs your attention" color="#e85d3a" icon="⚠️" />
-        <StatCard label="Avg Compliance" value={`${avgCompliance}%`} sub="across all Centre HRs" color="#10b981" icon="✅" />
+        <StatCard
+          label="Active Open Positions" value={data.openPositions.filter(p => p.status !== "closed").length}
+          sub="across all centres" color="#6366f1" icon="📋"
+          clickable={true}
+          onClick={() => onOpenModal("Active Positions", data.openPositions.filter(p => p.status !== "closed"))}
+        />
+        <StatCard
+          label="Yet to Join" value={yetToJoin.length}
+          sub="offer accepted, awaiting DOJ" color="#8b5cf6" icon="🕐"
+          clickable={yetToJoin.length > 0}
+          onClick={() => yetToJoin.length > 0 && onOpenModal("Yet to Join", yetToJoin)}
+        />
+        <StatCard
+          label="Overdue Positions" value={overduePositions.length}
+          sub="past expected closure date" color="#e85d3a" icon="⚠️"
+          clickable={overduePositions.length > 0}
+          onClick={() => overduePositions.length > 0 && onOpenModal("Overdue Positions", overduePositions)}
+        />
+        <StatCard
+          label="Avg Compliance" value={`${avgCompliance}%`}
+          sub="across all Centre HRs" color="#10b981" icon="✅"
+          clickable={false}
+        />
       </div>
+
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
         <div style={S.card}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
             <div style={{ fontSize: "12px", fontWeight: "600", color: "#fff", fontFamily: "'Syne',sans-serif" }}>Today's Interviews</div>
             <span style={{ fontSize: "10px", color: "#e85d3a", fontWeight: "600" }}>{data.todayInterviews.length} scheduled</span>
           </div>
+          {data.todayInterviews.length === 0 && <div style={{ fontSize: "12px", color: "#444", textAlign: "center", padding: "20px 0" }}>No interviews today</div>}
           {data.todayInterviews.map((iv, i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px", borderRadius: "8px", background: "rgba(255,255,255,0.03)", marginBottom: "7px", border: "1px solid rgba(255,255,255,0.05)" }}>
               <div style={{ fontSize: "11px", fontWeight: "700", color: "#e85d3a", width: "54px", flexShrink: 0 }}>{iv.time}</div>
@@ -320,7 +428,6 @@ function DashboardTab({ data, isLive }) {
         <div style={S.card}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
             <div style={{ fontSize: "12px", fontWeight: "600", color: "#fff", fontFamily: "'Syne',sans-serif" }}>Compliance Snapshot</div>
-            <span style={{ fontSize: "10px", color: "#e85d3a", fontWeight: "600" }}>{overdueCount} overdue</span>
           </div>
           {data.compliance.map((hr, i) => (
             <div key={i} style={{ marginBottom: "10px" }}>
@@ -335,13 +442,15 @@ function DashboardTab({ data, isLive }) {
           ))}
         </div>
       </div>
+
       <div style={S.card}>
         <div style={{ fontSize: "12px", fontWeight: "600", color: "#fff", fontFamily: "'Syne',sans-serif", marginBottom: "16px" }}>Hiring Pipeline — Positions by Step</div>
         <div style={{ display: "flex", gap: "8px" }}>
           {STEP_LABELS.slice(1).map((step, i) => {
             const count = data.openPositions.filter(p => p.step === i + 1).length;
             return (
-              <div key={i} style={{ flex: 1, textAlign: "center" }}>
+              <div key={i} style={{ flex: 1, textAlign: "center", cursor: count > 0 ? "pointer" : "default" }}
+                onClick={() => count > 0 && onOpenModal(`Step ${i+1}: ${step}`, data.openPositions.filter(p => p.step === i + 1))}>
                 <div style={{ background: count > 0 ? "rgba(232,93,58,0.12)" : "rgba(255,255,255,0.02)", border: count > 0 ? "1px solid rgba(232,93,58,0.3)" : "1px solid rgba(255,255,255,0.05)", borderRadius: "10px", padding: "12px 4px" }}>
                   <div style={{ fontSize: "20px", fontWeight: "800", color: count > 0 ? "#e85d3a" : "#2a2a3a", fontFamily: "'Syne',sans-serif" }}>{count}</div>
                   <div style={{ fontSize: "8px", color: "#444", marginTop: "5px", lineHeight: "1.4" }}>{step}</div>
@@ -494,10 +603,12 @@ export default function App() {
   const [isLive, setIsLive] = useState(false);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
+  const [modal, setModal] = useState(null);
   const [time, setTime] = useState(new Date());
 
   useEffect(() => { const t = setInterval(() => setTime(new Date()), 60000); return () => clearInterval(t); }, []);
   const showToast = (message, type = "success") => setToast({ message, type });
+  const openModal = (title, positions) => setModal({ title, positions });
 
   const loadLiveData = useCallback(async (cfg) => {
     if (!cfg.taTrackerUrl) return;
@@ -595,7 +706,7 @@ export default function App() {
         </div>
 
         <div style={{ padding: "24px 28px" }}>
-          {activeTab === "dashboard"  && <DashboardTab  data={data} isLive={isLive} />}
+          {activeTab === "dashboard"  && <DashboardTab  data={data} isLive={isLive} onOpenModal={openModal} />}
           {activeTab === "positions"  && <PositionsTab  data={data} />}
           {activeTab === "compliance" && <ComplianceTab data={data} onRemind={handleRemind} />}
           {activeTab === "interviews" && <InterviewsTab data={data} />}
@@ -604,6 +715,7 @@ export default function App() {
         </div>
       </div>
 
+      {modal && <PositionModal title={modal.title} positions={modal.positions} onClose={() => setModal(null)} />}
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
