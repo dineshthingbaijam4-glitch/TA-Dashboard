@@ -49,6 +49,12 @@ const ALERT_CONFIG = {
   success: { border: "#10b981", bg: "rgba(16,185,129,0.07)", icon: "🟢" },
 };
 
+// Colour palette for centre dots/bars — cycles if more than 8 centres
+const CENTRE_COLOURS = [
+  "#6366f1", "#e85d3a", "#f59e0b", "#10b981",
+  "#8b5cf6", "#3b82f6", "#f97316", "#ec4899",
+];
+
 function extractSheetId(url) {
   const m = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
   return m ? m[1] : null;
@@ -69,7 +75,6 @@ async function fetchSheetData(sheetId, sheetName = "Sheet1") {
 }
 
 function inferStepFromRow(row) {
-  // Infer TA process step (1-7) from your sheet columns
   const positionClosedDate = row["Position close date / Offer Letter release date"] || row["Position close date"] || "";
   const offerCandidate = row["Offer Candidate name"] || "";
   const doj = row["DOJ"] || "";
@@ -77,19 +82,18 @@ function inferStepFromRow(row) {
   const openPos = row["Open position"];
   const action = (row["Action"] || "").toLowerCase();
 
-  if (doj && String(doj).trim()) return 7; // Position Closed — candidate joined
-  if (signLetter && String(signLetter).trim()) return 7; // Sign letter received
-  if (positionClosedDate && String(positionClosedDate).trim()) return 6; // Offer released
-  if (offerCandidate && String(offerCandidate).trim()) return 6; // Offer candidate named
-  if (action.includes("final") || action.includes("offer")) return 5; // Feedback / final stage
-  if (action.includes("interview") || action.includes("round")) return 4; // In interviews
-  if (action.includes("screen") || action.includes("profile")) return 3; // Screening
-  if (openPos && parseInt(openPos) > 0) return 2; // TA Tracker updated
-  return 1; // Just raised
+  if (doj && String(doj).trim()) return 7;
+  if (signLetter && String(signLetter).trim()) return 7;
+  if (positionClosedDate && String(positionClosedDate).trim()) return 6;
+  if (offerCandidate && String(offerCandidate).trim()) return 6;
+  if (action.includes("final") || action.includes("offer")) return 5;
+  if (action.includes("interview") || action.includes("round")) return 4;
+  if (action.includes("screen") || action.includes("profile")) return 3;
+  if (openPos && parseInt(openPos) > 0) return 2;
+  return 1;
 }
 
-function inferStatusFromStep(step, row) {
-  const action = (row["Action"] || "").toLowerCase();
+function inferStatusFromStep(step) {
   if (step === 7) return "closed";
   if (step === 6) return "offer";
   if (step === 5) return "final";
@@ -103,7 +107,6 @@ function calcDaysOpen(row) {
   const dateStr = row["Position receive date"] || row["Position Receive Date"] || "";
   if (!dateStr) return 0;
   try {
-    // Handle Google Sheets date serial number
     if (typeof dateStr === "number") {
       const msPerDay = 86400000;
       const excelEpoch = new Date(1899, 11, 30);
@@ -120,19 +123,26 @@ function parseSheetToPositions(rows) {
   return rows.map((row, i) => {
     const step = inferStepFromRow(row);
     const daysOpen = calcDaysOpen(row);
-    const status = inferStatusFromStep(step, row);
-    const openPos = parseInt(row["Open position"] || 0) || 0;
+    const status = inferStatusFromStep(step);
+
+    // ── Centre: read directly from "Centers" or "Centre" column ──
+    const centre = (
+      row["Centers"] ||
+      row["Centre"] ||
+      row["Center"] ||
+      "Unknown"
+    ).toString().trim();
 
     return {
       id: i + 1,
       role: (row["Role"] || row["Role "] || "").trim(),
-      centre: (row["Centers"] || row["Centre"] || "Unknown").trim(),
+      centre,
       step,
       daysOpen,
       hr: (row["Ownership"] || row["Lead"] || row["Hiring Manager"] || "Unknown HR").trim(),
       status,
       priority: daysOpen > 21 ? "high" : daysOpen > 10 ? "medium" : "low",
-      openPositions: openPos,
+      openPositions: parseInt(row["Open position"] || 0) || 0,
       totalReq: parseInt(row["Total Requirements"] || 1) || 1,
       positionClosed: parseInt(row["Position Closed"] || 0) || 0,
       expectedClosure: row["Expected Closure Date"] || "",
@@ -147,7 +157,6 @@ function parseSheetToPositions(rows) {
     };
   }).filter(p => {
     if (!p.role || p.role === "") return false;
-    // Only include rows where Action = "In Progress" (case-insensitive)
     const action = (p._action || "").toLowerCase().trim();
     return action === "in progress" || action === "inprogress";
   });
@@ -187,14 +196,12 @@ function NavItem({ tab, active, onClick }) {
   );
 }
 
-
 // ── MODAL ─────────────────────────────────────────────────────────────────────
 function PositionModal({ title, positions, onClose }) {
   if (!positions) return null;
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }} onClick={onClose}>
       <div style={{ background: "#13131a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "16px", width: "90%", maxWidth: "900px", maxHeight: "80vh", overflow: "hidden", display: "flex", flexDirection: "column" }} onClick={e => e.stopPropagation()}>
-        {/* Header */}
         <div style={{ padding: "18px 24px", borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
             <div style={{ fontSize: "15px", fontWeight: "700", color: "#fff", fontFamily: "'Syne',sans-serif" }}>{title}</div>
@@ -202,7 +209,6 @@ function PositionModal({ title, positions, onClose }) {
           </div>
           <button onClick={onClose} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#888", fontSize: "13px", padding: "6px 12px", cursor: "pointer" }}>✕ Close</button>
         </div>
-        {/* Table */}
         <div style={{ overflow: "auto", flex: 1 }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead style={{ position: "sticky", top: 0, background: "#13131a", zIndex: 1 }}>
@@ -297,7 +303,6 @@ function SettingsTab({ config, onSave, onTest }) {
       <h2 style={{ margin: "0 0 6px", fontSize: "16px", fontWeight: "700", color: "#fff", fontFamily: "'Syne',sans-serif" }}>Connect Your Data</h2>
       <p style={{ margin: "0 0 24px", fontSize: "12px", color: "#555", lineHeight: "1.6" }}>Paste your Google Sheet links below. Make sure each sheet is set to <strong style={{ color: "#888" }}>"Anyone with the link — Viewer"</strong> in sharing settings.</p>
 
-      {/* Step-by-step sharing guide */}
       <div style={{ ...S.card, marginBottom: "20px", background: "rgba(59,130,246,0.05)", border: "1px solid rgba(59,130,246,0.15)" }}>
         <div style={{ fontSize: "12px", fontWeight: "700", color: "#818cf8", marginBottom: "10px" }}>📌 How to make your Google Sheet public (read-only):</div>
         {["Open your Google Sheet", "Click the 'Share' button (top right)", "Click 'Change to anyone with the link'", "Make sure it says 'Viewer' (not Editor)", "Click 'Copy link' and paste it below"].map((s, i) => (
@@ -308,7 +313,6 @@ function SettingsTab({ config, onSave, onTest }) {
         ))}
       </div>
 
-      {/* Sheets */}
       <div style={{ ...S.card, marginBottom: "16px" }}>
         <div style={{ fontSize: "13px", fontWeight: "700", color: "#fff", fontFamily: "'Syne',sans-serif", marginBottom: "18px", paddingBottom: "12px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>📊 Google Sheets Trackers</div>
         <Field label="TA Tracker URL" fkey="taTrackerUrl" testKey="taTracker" placeholder="https://docs.google.com/spreadsheets/d/..." hint="Your main open positions tracker (Step 2 of TA Process)" />
@@ -317,7 +321,6 @@ function SettingsTab({ config, onSave, onTest }) {
         <Field label="Interview Tracker URL" fkey="interviewTrackerUrl" testKey="interviewTracker" placeholder="https://docs.google.com/spreadsheets/d/..." hint="Step 4 — candidates in interview rounds" />
       </div>
 
-      {/* Alerts */}
       <div style={{ ...S.card, marginBottom: "16px" }}>
         <div style={{ fontSize: "13px", fontWeight: "700", color: "#fff", fontFamily: "'Syne',sans-serif", marginBottom: "18px", paddingBottom: "12px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>🔔 Alert Settings</div>
         <Field label="Your Email (for daily compliance alerts)" fkey="alertEmail" placeholder="dinesh.t@locobear.com" hint="You'll receive a daily morning digest of overdue tracker updates" />
@@ -346,13 +349,60 @@ function SettingsTab({ config, onSave, onTest }) {
   );
 }
 
+// ── CENTRE BREAKDOWN CARD ─────────────────────────────────────────────────────
+function CentreBreakdown({ positions }) {
+  const active = positions.filter(p => p.status !== "closed");
+  const total = active.length;
+
+  // Build centre → count map, reading the "centre" field set during sheet parse
+  const centreMap = {};
+  active.forEach(p => {
+    const key = (p.centre || "Unknown").trim();
+    centreMap[key] = (centreMap[key] || 0) + 1;
+  });
+
+  const sorted = Object.entries(centreMap).sort((a, b) => b[1] - a[1]);
+
+  return (
+    <div style={S.card}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+        <div style={{ fontSize: "12px", fontWeight: "600", color: "#fff", fontFamily: "'Syne',sans-serif" }}>Open positions by centre</div>
+        <span style={{ fontSize: "10px", color: "#555" }}>{total} active</span>
+      </div>
+
+      {sorted.length === 0 && (
+        <div style={{ fontSize: "12px", color: "#444", textAlign: "center", padding: "20px 0" }}>No active positions</div>
+      )}
+
+      {sorted.map(([centre, count], i) => {
+        const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+        const colour = CENTRE_COLOURS[i % CENTRE_COLOURS.length];
+        return (
+          <div key={centre} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 0", borderBottom: i < sorted.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
+            {/* Colour dot */}
+            <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: colour, flexShrink: 0 }} />
+            {/* Centre name */}
+            <div style={{ fontSize: "11px", color: "#bbb", minWidth: "90px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{centre}</div>
+            {/* Bar */}
+            <div style={{ flex: 1, height: "4px", background: "rgba(255,255,255,0.07)", borderRadius: "2px", overflow: "hidden" }}>
+              <div style={{ height: "100%", borderRadius: "2px", width: `${pct}%`, background: colour, transition: "width 0.4s ease" }} />
+            </div>
+            {/* Count */}
+            <span style={{ fontSize: "12px", fontWeight: "700", color: "#ddd", minWidth: "18px", textAlign: "right" }}>{count}</span>
+            {/* Percent */}
+            <span style={{ fontSize: "10px", color: "#444", minWidth: "32px", textAlign: "right" }}>{pct}%</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function DashboardTab({ data, isLive, onOpenModal }) {
   const today = new Date();
 
-  // Yet to Join = positions where offer sent but DOJ not yet passed
   const yetToJoin = data.openPositions.filter(p => p.status === "offer" || (p.yetToJoin && parseInt(p.yetToJoin) > 0));
 
-  // Overdue = positions past their Expected Closure Date
   const overduePositions = data.openPositions.filter(p => {
     if (!p.expectedClosure) return false;
     const closureDate = new Date(p.expectedClosure);
@@ -387,6 +437,7 @@ function DashboardTab({ data, isLive, onOpenModal }) {
         </div>
       )}
 
+      {/* ── Stat Cards ── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "14px", marginBottom: "24px" }}>
         <StatCard
           label="Active Open Positions" value={data.openPositions.filter(p => p.status !== "closed").length}
@@ -413,24 +464,13 @@ function DashboardTab({ data, isLive, onOpenModal }) {
         />
       </div>
 
+      {/* ── Centre Breakdown + Compliance ── */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
-        <div style={S.card}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
-            <div style={{ fontSize: "12px", fontWeight: "600", color: "#fff", fontFamily: "'Syne',sans-serif" }}>Today's Interviews</div>
-            <span style={{ fontSize: "10px", color: "#e85d3a", fontWeight: "600" }}>{data.todayInterviews.length} scheduled</span>
-          </div>
-          {data.todayInterviews.length === 0 && <div style={{ fontSize: "12px", color: "#444", textAlign: "center", padding: "20px 0" }}>No interviews today</div>}
-          {data.todayInterviews.map((iv, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px", borderRadius: "8px", background: "rgba(255,255,255,0.03)", marginBottom: "7px", border: "1px solid rgba(255,255,255,0.05)" }}>
-              <div style={{ fontSize: "11px", fontWeight: "700", color: "#e85d3a", width: "54px", flexShrink: 0 }}>{iv.time}</div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: "12px", fontWeight: "600", color: "#ddd", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{iv.candidate}</div>
-                <div style={{ fontSize: "10px", color: "#555" }}>{iv.role}</div>
-              </div>
-              <span style={{ padding: "2px 7px", borderRadius: "20px", fontSize: "9px", fontWeight: "700", background: iv.round === "Final Round" ? "rgba(249,115,22,0.15)" : "rgba(99,102,241,0.15)", color: iv.round === "Final Round" ? "#f97316" : "#818cf8", whiteSpace: "nowrap" }}>{iv.round}</span>
-            </div>
-          ))}
-        </div>
+
+        {/* LEFT — Centre breakdown (mapped from Centers column) */}
+        <CentreBreakdown positions={data.openPositions} />
+
+        {/* RIGHT — Compliance snapshot */}
         <div style={S.card}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
             <div style={{ fontSize: "12px", fontWeight: "600", color: "#fff", fontFamily: "'Syne',sans-serif" }}>Compliance Snapshot</div>
@@ -449,6 +489,7 @@ function DashboardTab({ data, isLive, onOpenModal }) {
         </div>
       </div>
 
+      {/* ── Pipeline ── */}
       <div style={S.card}>
         <div style={{ fontSize: "12px", fontWeight: "600", color: "#fff", fontFamily: "'Syne',sans-serif", marginBottom: "16px" }}>Hiring Pipeline — Positions by Step</div>
         <div style={{ display: "flex", gap: "8px" }}>
