@@ -35,23 +35,23 @@ const MOCK_DATA = {
 const STEP_LABELS = ["", "Hiring Request", "TA Tracker", "Candidate Tracker", "Interview Tracker", "Feedback", "Offer/Reject", "Closed"];
 const STATUS_CONFIG = {
   new:       { color: "#6366f1", bg: "rgba(99,102,241,0.12)",  label: "NEW" },
-  tracker:   { color: "#f59e0b", bg: "rgba(245,158,11,0.12)",  label: "TRACKER" },
+  tracker:   { color: "#b8956a", bg: "rgba(245,158,11,0.12)",  label: "TRACKER" },
   screening: { color: "#3b82f6", bg: "rgba(59,130,246,0.12)",  label: "SCREENING" },
   interview: { color: "#8b5cf6", bg: "rgba(139,92,246,0.12)",  label: "INTERVIEW" },
   final:     { color: "#f97316", bg: "rgba(249,115,22,0.12)",  label: "FINAL" },
-  offer:     { color: "#10b981", bg: "rgba(16,185,129,0.12)",  label: "OFFER" },
+  offer:     { color: "#5a9a8f", bg: "rgba(16,185,129,0.12)",  label: "OFFER" },
   closed:    { color: "#6b7280", bg: "rgba(107,114,128,0.12)", label: "CLOSED" },
 };
 const ALERT_CONFIG = {
-  error:   { border: "#e85d3a", bg: "rgba(232,93,58,0.07)",  icon: "🔴" },
-  warning: { border: "#f59e0b", bg: "rgba(245,158,11,0.07)", icon: "🟡" },
-  info:    { border: "#3b82f6", bg: "rgba(59,130,246,0.07)", icon: "🔵" },
-  success: { border: "#10b981", bg: "rgba(16,185,129,0.07)", icon: "🟢" },
+  error:   { border: "#c4786a", bg: "rgba(196,120,106,0.07)",  bgLight: "#f5e8e4", borderLight: "#c4786a", icon: "🔴" },
+  warning: { border: "#b8956a", bg: "rgba(184,149,106,0.07)", bgLight: "#f5efe4", borderLight: "#b8956a", icon: "🟡" },
+  info:    { border: "#6a9ab0", bg: "rgba(106,154,176,0.07)",  bgLight: "#e4eef2", borderLight: "#6a9ab0", icon: "🔵" },
+  success: { border: "#5a9a8f", bg: "rgba(90,154,143,0.07)",  bgLight: "#e8f5f1", borderLight: "#5a9a8f", icon: "🟢" },
 };
 
 const CENTRE_COLOURS = [
-  "#6366f1", "#e85d3a", "#f59e0b", "#10b981",
-  "#8b5cf6", "#3b82f6", "#f97316", "#ec4899",
+  "#6a6ab0", "#c4786a", "#b8956a", "#5a9a8f",
+  "#8a6ab0", "#6a9ab0", "#b8785a", "#b06a8a",
 ];
 
 function extractSheetId(url) {
@@ -175,23 +175,23 @@ function parseSheetToPositions(rows) {
 }
 
 const S = {
-  app: { minHeight: "100vh", background: "#0a0a0f", fontFamily: "'DM Sans', sans-serif", color: "#e0e0e8", display: "flex", backgroundImage: "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(232,93,58,0.08), transparent)" },
-  sidebar: { width: "220px", minHeight: "100vh", background: "rgba(255,255,255,0.02)", borderRight: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", flexShrink: 0, position: "sticky", top: 0, height: "100vh" },
+  app: { minHeight: "100vh", background: "#f5f0eb", fontFamily: "'DM Sans', sans-serif", color: "#4a4a4a", display: "flex" },
+  sidebar: { width: "220px", minHeight: "100vh", background: "#faf8f5", borderRight: "1px solid #e8e2da", display: "flex", flexDirection: "column", flexShrink: 0, position: "sticky", top: 0, height: "100vh" },
   main: { flex: 1, overflow: "auto", minHeight: "100vh" },
-  card: { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "20px" },
-  input: { width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "10px 14px", color: "#ddd", fontSize: "12px", fontFamily: "'DM Sans', sans-serif", outline: "none", boxSizing: "border-box" },
-  label: { fontSize: "11px", color: "#555", marginBottom: "6px", display: "block", fontWeight: "600", letterSpacing: "0.06em", textTransform: "uppercase" },
+  card: { background: "#ffffff", border: "1px solid #e8e2da", borderRadius: "14px", padding: "20px", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" },
+  input: { width: "100%", background: "#faf8f5", border: "1px solid #d4cdc3", borderRadius: "8px", padding: "10px 14px", color: "#4a4a4a", fontSize: "12px", fontFamily: "'DM Sans', sans-serif", outline: "none", boxSizing: "border-box" },
+  label: { fontSize: "11px", color: "#8a8279", marginBottom: "6px", display: "block", fontWeight: "600", letterSpacing: "0.06em", textTransform: "uppercase" },
   btn: { padding: "10px 20px", borderRadius: "8px", border: "none", cursor: "pointer", fontSize: "12px", fontWeight: "600", fontFamily: "'DM Sans', sans-serif" },
 };
 
 function Logo() {
   return (
-    <div style={{ padding: "22px 20px 18px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+    <div style={{ padding: "22px 20px 18px", borderBottom: "1px solid #e8e2da" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-        <div style={{ width: "34px", height: "34px", background: "linear-gradient(135deg,#e85d3a,#f59e0b)", borderRadius: "9px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "17px", fontWeight: "800", color: "white", fontFamily: "'Syne',sans-serif", boxShadow: "0 4px 12px rgba(232,93,58,0.35)" }}>L</div>
+        <div style={{ width: "34px", height: "34px", background: "linear-gradient(135deg,#5a9a8f,#7db9a8)", borderRadius: "9px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "17px", fontWeight: "800", color: "white", fontFamily: "'Syne',sans-serif", boxShadow: "0 4px 12px rgba(90,154,143,0.25)" }}>L</div>
         <div>
-          <div style={{ fontSize: "12px", fontWeight: "700", color: "#fff", fontFamily: "'Syne',sans-serif", letterSpacing: "0.06em" }}>LOCO BEAR</div>
-          <div style={{ fontSize: "9px", color: "#444", letterSpacing: "0.12em" }}>TA OPERATIONS</div>
+          <div style={{ fontSize: "12px", fontWeight: "700", color: "#3a3a3a", fontFamily: "'Syne',sans-serif", letterSpacing: "0.06em" }}>LOCO BEAR</div>
+          <div style={{ fontSize: "9px", color: "#8a8279", letterSpacing: "0.12em" }}>TA OPERATIONS</div>
         </div>
       </div>
     </div>
@@ -200,10 +200,10 @@ function Logo() {
 
 function NavItem({ tab, active, onClick }) {
   return (
-    <button onClick={onClick} style={{ width: "100%", display: "flex", alignItems: "center", gap: "9px", padding: "9px 12px", borderRadius: "8px", border: "none", cursor: "pointer", background: active ? "rgba(232,93,58,0.1)" : "transparent", color: active ? "#e85d3a" : "#555", fontSize: "12px", fontWeight: active ? "600" : "400", marginBottom: "2px", textAlign: "left", transition: "all 0.15s", borderLeft: active ? "2px solid #e85d3a" : "2px solid transparent", fontFamily: "'DM Sans',sans-serif" }}>
+    <button onClick={onClick} style={{ width: "100%", display: "flex", alignItems: "center", gap: "9px", padding: "9px 12px", borderRadius: "8px", border: "none", cursor: "pointer", background: active ? "rgba(90,154,143,0.1)" : "transparent", color: active ? "#5a9a8f" : "#8a8279", fontSize: "12px", fontWeight: active ? "600" : "400", marginBottom: "2px", textAlign: "left", transition: "all 0.15s", borderLeft: active ? "2px solid #5a9a8f" : "2px solid transparent", fontFamily: "'DM Sans',sans-serif" }}>
       <span style={{ fontSize: "13px", width: "16px", textAlign: "center" }}>{tab.icon}</span>
       {tab.label}
-      {tab.badge > 0 && <span style={{ marginLeft: "auto", background: "#e85d3a", color: "white", borderRadius: "10px", padding: "1px 6px", fontSize: "9px", fontWeight: "700" }}>{tab.badge}</span>}
+      {tab.badge > 0 && <span style={{ marginLeft: "auto", background: "#5a9a8f", color: "white", borderRadius: "10px", padding: "1px 6px", fontSize: "9px", fontWeight: "700" }}>{tab.badge}</span>}
     </button>
   );
 }
@@ -211,43 +211,43 @@ function NavItem({ tab, active, onClick }) {
 function PositionModal({ title, positions, onClose }) {
   if (!positions) return null;
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }} onClick={onClose}>
-      <div style={{ background: "#13131a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "16px", width: "90%", maxWidth: "900px", maxHeight: "80vh", overflow: "hidden", display: "flex", flexDirection: "column" }} onClick={e => e.stopPropagation()}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)" }} onClick={onClose}>
+      <div style={{ background: "#ffffff", border: "1px solid #e8e2da", borderRadius: "16px", width: "90%", maxWidth: "900px", maxHeight: "80vh", overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 20px 60px rgba(0,0,0,0.15)" }} onClick={e => e.stopPropagation()}>
         <div style={{ padding: "18px 24px", borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
-            <div style={{ fontSize: "15px", fontWeight: "700", color: "#fff", fontFamily: "'Syne',sans-serif" }}>{title}</div>
-            <div style={{ fontSize: "11px", color: "#555", marginTop: "2px" }}>{positions.length} position{positions.length !== 1 ? "s" : ""}</div>
+            <div style={{ fontSize: "15px", fontWeight: "700", color: "#3a3a3a", fontFamily: "'Syne',sans-serif" }}>{title}</div>
+            <div style={{ fontSize: "11px", color: "#8a8279", marginTop: "2px" }}>{positions.length} position{positions.length !== 1 ? "s" : ""}</div>
           </div>
-          <button onClick={onClose} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#888", fontSize: "13px", padding: "6px 12px", cursor: "pointer" }}>✕ Close</button>
+          <button onClick={onClose} style={{ background: "#f0ebe4", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#8a8279", fontSize: "13px", padding: "6px 12px", cursor: "pointer" }}>✕ Close</button>
         </div>
         <div style={{ overflow: "auto", flex: 1 }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead style={{ position: "sticky", top: 0, background: "#13131a", zIndex: 1 }}>
-              <tr style={{ background: "rgba(255,255,255,0.04)" }}>
+            <thead style={{ position: "sticky", top: 0, background: "#faf8f5", zIndex: 1 }}>
+              <tr style={{ background: "#faf8f5" }}>
                 {["Role", "Centre", "HR Owner", "Step", "Days Open", "Expected Closure", "Status", "Offer Candidate"].map(h => (
-                  <th key={h} style={{ padding: "10px 14px", textAlign: "left", fontSize: "9px", color: "#444", fontWeight: "600", letterSpacing: "0.08em", textTransform: "uppercase", borderBottom: "1px solid rgba(255,255,255,0.06)", whiteSpace: "nowrap" }}>{h}</th>
+                  <th key={h} style={{ padding: "10px 14px", textAlign: "left", fontSize: "9px", color: "#8a8279", fontWeight: "600", letterSpacing: "0.08em", textTransform: "uppercase", borderBottom: "1px solid rgba(255,255,255,0.06)", whiteSpace: "nowrap" }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {positions.length === 0 && (
-                <tr><td colSpan={8} style={{ padding: "40px", textAlign: "center", color: "#333" }}>No positions found</td></tr>
+                <tr><td colSpan={8} style={{ padding: "40px", textAlign: "center", color: "#8a8279" }}>No positions found</td></tr>
               )}
               {positions.map((pos, i) => {
                 const sc = STATUS_CONFIG[pos.status] || STATUS_CONFIG.new;
                 const isOverdue = pos.expectedClosure && new Date(pos.expectedClosure) < new Date() && pos.status !== "closed";
                 return (
-                  <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)", background: isOverdue ? "rgba(232,93,58,0.04)" : "transparent" }}
+                  <tr key={i} style={{ borderBottom: "1px solid #f0ebe4", background: isOverdue ? "#f5e8e4" : "transparent" }}
                     onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}
                     onMouseLeave={e => e.currentTarget.style.background = isOverdue ? "rgba(232,93,58,0.04)" : "transparent"}>
-                    <td style={{ padding: "12px 14px", fontSize: "12px", fontWeight: "600", color: "#ddd" }}>{pos.role}</td>
-                    <td style={{ padding: "12px 14px", fontSize: "11px", color: "#666" }}>{pos.centre}</td>
-                    <td style={{ padding: "12px 14px", fontSize: "11px", color: "#666" }}>{pos.hr}</td>
+                    <td style={{ padding: "12px 14px", fontSize: "12px", fontWeight: "600", color: "#3a3a3a" }}>{pos.role}</td>
+                    <td style={{ padding: "12px 14px", fontSize: "11px", color: "#8a8279" }}>{pos.centre}</td>
+                    <td style={{ padding: "12px 14px", fontSize: "11px", color: "#8a8279" }}>{pos.hr}</td>
                     <td style={{ padding: "12px 14px" }}>
                       <div style={{ display: "flex", gap: "2px" }}>
                         {[1,2,3,4,5,6,7].map(s => <div key={s} style={{ width: "14px", height: "3px", borderRadius: "2px", background: s <= pos.step ? "#e85d3a" : "rgba(255,255,255,0.08)" }} />)}
                       </div>
-                      <div style={{ fontSize: "9px", color: "#555", marginTop: "3px" }}>Step {pos.step}</div>
+                      <div style={{ fontSize: "9px", color: "#8a8279", marginTop: "3px" }}>Step {pos.step}</div>
                     </td>
                     <td style={{ padding: "12px 14px" }}>
                       <span style={{ fontSize: "12px", fontWeight: "700", color: pos.daysOpen > 14 ? "#e85d3a" : pos.daysOpen > 7 ? "#f59e0b" : "#10b981" }}>{pos.daysOpen}d</span>
@@ -259,7 +259,7 @@ function PositionModal({ title, positions, onClose }) {
                     <td style={{ padding: "12px 14px" }}>
                       <span style={{ padding: "3px 8px", borderRadius: "20px", fontSize: "9px", fontWeight: "700", background: sc.bg, color: sc.color }}>{sc.label}</span>
                     </td>
-                    <td style={{ padding: "12px 14px", fontSize: "11px", color: "#777" }}>{pos.offerCandidate || "—"}</td>
+                    <td style={{ padding: "12px 14px", fontSize: "11px", color: "#8a8279" }}>{pos.offerCandidate || "—"}</td>
                   </tr>
                 );
               })}
@@ -274,7 +274,7 @@ function PositionModal({ title, positions, onClose }) {
 function Toast({ message, type = "success", onClose }) {
   useEffect(() => { const t = setTimeout(onClose, 3500); return () => clearTimeout(t); }, [onClose]);
   return (
-    <div style={{ position: "fixed", bottom: "24px", right: "24px", zIndex: 1000, background: type === "error" ? "linear-gradient(135deg,#e85d3a,#dc2626)" : "linear-gradient(135deg,#e85d3a,#f59e0b)", color: "white", padding: "12px 20px", borderRadius: "10px", fontSize: "13px", fontWeight: "600", boxShadow: "0 8px 24px rgba(232,93,58,0.4)", maxWidth: "320px", lineHeight: "1.4" }}>
+    <div style={{ position: "fixed", bottom: "24px", right: "24px", zIndex: 1000, background: type === "error" ? "#dc4446" : "#5a9a8f", color: "white", padding: "12px 20px", borderRadius: "10px", fontSize: "13px", fontWeight: "600", boxShadow: "0 8px 24px rgba(0,0,0,0.1)", maxWidth: "320px", lineHeight: "1.4" }}>
       {type === "error" ? "❌ " : "✅ "}{message}
     </div>
   );
@@ -299,32 +299,32 @@ function SettingsTab({ config, onSave, onTest }) {
       <div style={{ display: "flex", gap: "8px" }}>
         <input style={S.input} placeholder={placeholder} value={form[fkey] || ""} onChange={e => update(fkey, e.target.value)} />
         {testKey && (
-          <button onClick={() => handleTest(testKey)} style={{ ...S.btn, background: testing[testKey] === "ok" ? "rgba(16,185,129,0.15)" : "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: testing[testKey] === "ok" ? "#10b981" : "#888", padding: "10px 14px", whiteSpace: "nowrap" }}>
+          <button onClick={() => handleTest(testKey)} style={{ ...S.btn, background: testing[testKey] === "ok" ? "rgba(90,154,143,0.1)" : "#faf8f5", border: "1px solid rgba(255,255,255,0.1)", color: testing[testKey] === "ok" ? "#5a9a8f" : "#8a8279", padding: "10px 14px", whiteSpace: "nowrap" }}>
             {testIcon(testKey)}
           </button>
         )}
       </div>
-      {hint && <div style={{ fontSize: "10px", color: "#444", marginTop: "5px", lineHeight: "1.5" }}>{hint}</div>}
+      {hint && <div style={{ fontSize: "10px", color: "#8a8279", marginTop: "5px", lineHeight: "1.5" }}>{hint}</div>}
     </div>
   );
 
   return (
     <div style={{ maxWidth: "680px" }}>
-      <h2 style={{ margin: "0 0 6px", fontSize: "16px", fontWeight: "700", color: "#fff", fontFamily: "'Syne',sans-serif" }}>Connect Your Data</h2>
-      <p style={{ margin: "0 0 24px", fontSize: "12px", color: "#555", lineHeight: "1.6" }}>Paste your Google Sheet links below. Make sure each sheet is set to <strong style={{ color: "#888" }}>"Anyone with the link — Viewer"</strong> in sharing settings.</p>
+      <h2 style={{ margin: "0 0 6px", fontSize: "16px", fontWeight: "700", color: "#3a3a3a", fontFamily: "'Syne',sans-serif" }}>Connect Your Data</h2>
+      <p style={{ margin: "0 0 24px", fontSize: "12px", color: "#8a8279", lineHeight: "1.6" }}>Paste your Google Sheet links below. Make sure each sheet is set to <strong style={{ color: "#8a8279" }}>"Anyone with the link — Viewer"</strong> in sharing settings.</p>
 
-      <div style={{ ...S.card, marginBottom: "20px", background: "rgba(59,130,246,0.05)", border: "1px solid rgba(59,130,246,0.15)" }}>
-        <div style={{ fontSize: "12px", fontWeight: "700", color: "#818cf8", marginBottom: "10px" }}>📌 How to make your Google Sheet public (read-only):</div>
+      <div style={{ ...S.card, marginBottom: "20px", background: "#f0f7f5", border: "1px solid #c8ddd6" }}>
+        <div style={{ fontSize: "12px", fontWeight: "700", color: "#5a9a8f", marginBottom: "10px" }}>📌 How to make your Google Sheet public (read-only):</div>
         {["Open your Google Sheet", "Click the 'Share' button (top right)", "Click 'Change to anyone with the link'", "Make sure it says 'Viewer' (not Editor)", "Click 'Copy link' and paste it below"].map((s, i) => (
           <div key={i} style={{ display: "flex", gap: "10px", marginBottom: "6px", alignItems: "flex-start" }}>
-            <div style={{ width: "18px", height: "18px", borderRadius: "50%", background: "rgba(99,102,241,0.2)", color: "#818cf8", fontSize: "10px", fontWeight: "700", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: "1px" }}>{i + 1}</div>
-            <div style={{ fontSize: "11px", color: "#888" }}>{s}</div>
+            <div style={{ width: "18px", height: "18px", borderRadius: "50%", background: "rgba(90,154,143,0.15)", color: "#5a9a8f", fontSize: "10px", fontWeight: "700", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: "1px" }}>{i + 1}</div>
+            <div style={{ fontSize: "11px", color: "#8a8279" }}>{s}</div>
           </div>
         ))}
       </div>
 
       <div style={{ ...S.card, marginBottom: "16px" }}>
-        <div style={{ fontSize: "13px", fontWeight: "700", color: "#fff", fontFamily: "'Syne',sans-serif", marginBottom: "18px", paddingBottom: "12px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>📊 Google Sheets Trackers</div>
+        <div style={{ fontSize: "13px", fontWeight: "700", color: "#3a3a3a", fontFamily: "'Syne',sans-serif", marginBottom: "18px", paddingBottom: "12px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>📊 Google Sheets Trackers</div>
         <Field label="TA Tracker URL" fkey="taTrackerUrl" testKey="taTracker" placeholder="https://docs.google.com/spreadsheets/d/..." hint="Your main open positions tracker (Step 2 of TA Process)" />
         <Field label="Sheet Tab Name" fkey="taTrackerSheet" placeholder="Sheet1" hint="Exact name of the tab inside the spreadsheet — e.g. Sheet1, Open Positions, TA Tracker" />
         <Field label="Candidate Tracker URL" fkey="candidateTrackerUrl" testKey="candidateTracker" placeholder="https://docs.google.com/spreadsheets/d/..." hint="Step 3 — all screened/shortlisted profiles" />
@@ -332,14 +332,14 @@ function SettingsTab({ config, onSave, onTest }) {
       </div>
 
       <div style={{ ...S.card, marginBottom: "16px" }}>
-        <div style={{ fontSize: "13px", fontWeight: "700", color: "#fff", fontFamily: "'Syne',sans-serif", marginBottom: "18px", paddingBottom: "12px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>🔔 Alert Settings</div>
+        <div style={{ fontSize: "13px", fontWeight: "700", color: "#3a3a3a", fontFamily: "'Syne',sans-serif", marginBottom: "18px", paddingBottom: "12px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>🔔 Alert Settings</div>
         <Field label="Your Email (for daily compliance alerts)" fkey="alertEmail" placeholder="dinesh.t@locobear.com" hint="You'll receive a daily morning digest of overdue tracker updates" />
         <Field label="Centre HR Emails (comma separated)" fkey="centreHREmails" placeholder="nisarga.d@locobear.com, bosky.p@locobear.com, wilfred.w@locobear.com" hint="Reminder emails will be sent to these addresses automatically" />
         <div>
           <label style={S.label}>Alert me if no update for...</label>
           <div style={{ display: "flex", gap: "8px" }}>
             {[1, 2, 3].map(d => (
-              <button key={d} onClick={() => update("overdueThreshold", d)} style={{ ...S.btn, background: form.overdueThreshold === d ? "rgba(232,93,58,0.2)" : "rgba(255,255,255,0.04)", border: `1px solid ${form.overdueThreshold === d ? "rgba(232,93,58,0.4)" : "rgba(255,255,255,0.08)"}`, color: form.overdueThreshold === d ? "#e85d3a" : "#666", padding: "8px 18px" }}>
+              <button key={d} onClick={() => update("overdueThreshold", d)} style={{ ...S.btn, background: form.overdueThreshold === d ? "rgba(90,154,143,0.15)" : "#faf8f5", border: `1px solid ${form.overdueThreshold === d ? "#5a9a8f" : "#d4cdc3"}`, color: form.overdueThreshold === d ? "#5a9a8f" : "#8a8279", padding: "8px 18px" }}>
                 {d} day{d > 1 ? "s" : ""}
               </button>
             ))}
@@ -348,10 +348,10 @@ function SettingsTab({ config, onSave, onTest }) {
       </div>
 
       <div style={{ display: "flex", gap: "10px" }}>
-        <button onClick={() => onSave(form)} style={{ ...S.btn, background: "linear-gradient(135deg,#e85d3a,#f59e0b)", color: "white", padding: "12px 28px", boxShadow: "0 4px 14px rgba(232,93,58,0.3)", fontSize: "13px" }}>
+        <button onClick={() => onSave(form)} style={{ ...S.btn, background: "#5a9a8f", color: "white", padding: "12px 28px", boxShadow: "0 4px 14px rgba(90,154,143,0.25)", fontSize: "13px" }}>
           💾 Save & Connect
         </button>
-        <button onClick={() => setForm(config)} style={{ ...S.btn, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#666" }}>
+        <button onClick={() => setForm(config)} style={{ ...S.btn, background: "#faf8f5", border: "1px solid #d4cdc3", color: "#8a8279" }}>
           Reset
         </button>
       </div>
@@ -374,12 +374,12 @@ function CentreBreakdown({ positions, onOpenModal }) {
   return (
     <div style={S.card}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
-        <div style={{ fontSize: "12px", fontWeight: "600", color: "#fff", fontFamily: "'Syne',sans-serif" }}>Open positions by centre</div>
-        <span style={{ fontSize: "10px", color: "#555" }}>{total} active</span>
+        <div style={{ fontSize: "12px", fontWeight: "600", color: "#3a3a3a", fontFamily: "'Syne',sans-serif" }}>Open positions by centre</div>
+        <span style={{ fontSize: "10px", color: "#8a8279" }}>{total} active</span>
       </div>
 
       {sorted.length === 0 && (
-        <div style={{ fontSize: "12px", color: "#444", textAlign: "center", padding: "20px 0" }}>No active positions</div>
+        <div style={{ fontSize: "12px", color: "#8a8279", textAlign: "center", padding: "20px 0" }}>No active positions</div>
       )}
 
       {sorted.map(([centre, count], i) => {
@@ -407,8 +407,8 @@ function CentreBreakdown({ positions, onOpenModal }) {
             <div style={{ flex: 1, height: "4px", background: "rgba(255,255,255,0.07)", borderRadius: "2px", overflow: "hidden" }}>
               <div style={{ height: "100%", borderRadius: "2px", width: `${pct}%`, background: colour, transition: "width 0.4s ease" }} />
             </div>
-            <span style={{ fontSize: "12px", fontWeight: "700", color: "#ddd", minWidth: "18px", textAlign: "right" }}>{count}</span>
-            <span style={{ fontSize: "10px", color: "#444", minWidth: "32px", textAlign: "right" }}>{pct}%</span>
+            <span style={{ fontSize: "12px", fontWeight: "700", color: "#3a3a3a", minWidth: "18px", textAlign: "right" }}>{count}</span>
+            <span style={{ fontSize: "10px", color: "#8a8279", minWidth: "32px", textAlign: "right" }}>{pct}%</span>
           </div>
         );
       })}
@@ -432,12 +432,12 @@ function RoleBreakdown({ positions, onOpenModal }) {
   return (
     <div style={S.card}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
-        <div style={{ fontSize: "12px", fontWeight: "600", color: "#fff", fontFamily: "'Syne',sans-serif" }}>Open positions by role</div>
-        <span style={{ fontSize: "10px", color: "#555" }}>{total} active</span>
+        <div style={{ fontSize: "12px", fontWeight: "600", color: "#3a3a3a", fontFamily: "'Syne',sans-serif" }}>Open positions by role</div>
+        <span style={{ fontSize: "10px", color: "#8a8279" }}>{total} active</span>
       </div>
 
       {sorted.length === 0 && (
-        <div style={{ fontSize: "12px", color: "#444", textAlign: "center", padding: "20px 0" }}>No active positions</div>
+        <div style={{ fontSize: "12px", color: "#8a8279", textAlign: "center", padding: "20px 0" }}>No active positions</div>
       )}
 
       {sorted.map(([role, count], i) => {
@@ -465,8 +465,8 @@ function RoleBreakdown({ positions, onOpenModal }) {
             <div style={{ flex: 2, height: "4px", background: "rgba(255,255,255,0.07)", borderRadius: "2px", overflow: "hidden" }}>
               <div style={{ height: "100%", borderRadius: "2px", width: `${pct}%`, background: colour, transition: "width 0.4s ease" }} />
             </div>
-            <span style={{ fontSize: "12px", fontWeight: "700", color: "#ddd", minWidth: "18px", textAlign: "right" }}>{count}</span>
-            <span style={{ fontSize: "10px", color: "#444", minWidth: "32px", textAlign: "right" }}>{pct}%</span>
+            <span style={{ fontSize: "12px", fontWeight: "700", color: "#3a3a3a", minWidth: "18px", textAlign: "right" }}>{count}</span>
+            <span style={{ fontSize: "10px", color: "#8a8279", minWidth: "32px", textAlign: "right" }}>{pct}%</span>
           </div>
         );
       })}
@@ -496,8 +496,8 @@ function DashboardTab({ data, isLive, onOpenModal }) {
       onMouseLeave={e => { e.currentTarget.style.transform="translateY(0)"; e.currentTarget.style.boxShadow="none"; }}>
       <div style={{ fontSize: "20px", marginBottom: "10px" }}>{icon}</div>
       <div style={{ fontSize: "28px", fontWeight: "800", color, fontFamily: "'Syne',sans-serif" }}>{value}</div>
-      <div style={{ fontSize: "11px", color: "#888", marginTop: "5px" }}>{label}</div>
-      <div style={{ fontSize: "10px", color: "#444", marginTop: "2px" }}>{sub}</div>
+      <div style={{ fontSize: "11px", color: "#8a8279", marginTop: "5px" }}>{label}</div>
+      <div style={{ fontSize: "10px", color: "#8a8279", marginTop: "2px" }}>{sub}</div>
       {clickable && <div style={{ fontSize: "9px", color: color, marginTop: "8px", opacity: 0.7 }}>Click to view →</div>}
     </div>
   );
@@ -505,14 +505,14 @@ function DashboardTab({ data, isLive, onOpenModal }) {
   return (
     <div>
       {isLive && (
-        <div style={{ display: "inline-flex", alignItems: "center", gap: "7px", padding: "6px 14px", borderRadius: "20px", marginBottom: "20px", background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.25)" }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: "7px", padding: "6px 14px", borderRadius: "20px", marginBottom: "20px", background: "#e8f5f1", border: "1px solid #a8d5c5" }}>
           <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#10b981", animation: "pulse 2s infinite" }} />
-          <span style={{ fontSize: "11px", color: "#10b981", fontWeight: "600" }}>Live data from Google Sheets</span>
+          <span style={{ fontSize: "11px", color: "#5a9a8f", fontWeight: "600" }}>Live data from Google Sheets</span>
         </div>
       )}
       {!isLive && (
-        <div style={{ display: "inline-flex", alignItems: "center", gap: "7px", padding: "6px 14px", borderRadius: "20px", marginBottom: "20px", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)" }}>
-          <span style={{ fontSize: "11px", color: "#f59e0b", fontWeight: "600" }}>⚡ Showing demo data — go to Settings to connect your Google Sheets</span>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: "7px", padding: "6px 14px", borderRadius: "20px", marginBottom: "20px", background: "#fdf6ed", border: "1px solid #e8d5b8" }}>
+          <span style={{ fontSize: "11px", color: "#b8956a", fontWeight: "600" }}>⚡ Showing demo data — go to Settings to connect your Google Sheets</span>
         </div>
       )}
 
@@ -581,16 +581,16 @@ function DashboardTab({ data, isLive, onOpenModal }) {
       </div>
 
       <div style={S.card}>
-        <div style={{ fontSize: "12px", fontWeight: "600", color: "#fff", fontFamily: "'Syne',sans-serif", marginBottom: "16px" }}>Hiring Pipeline — Positions by Step</div>
+        <div style={{ fontSize: "12px", fontWeight: "600", color: "#3a3a3a", fontFamily: "'Syne',sans-serif", marginBottom: "16px" }}>Hiring Pipeline — Positions by Step</div>
         <div style={{ display: "flex", gap: "8px" }}>
           {STEP_LABELS.slice(1).map((step, i) => {
             const count = data.openPositions.filter(p => p.step === i + 1).length;
             return (
               <div key={i} style={{ flex: 1, textAlign: "center", cursor: count > 0 ? "pointer" : "default" }}
                 onClick={() => count > 0 && onOpenModal(`Step ${i+1}: ${step}`, data.openPositions.filter(p => p.step === i + 1))}>
-                <div style={{ background: count > 0 ? "rgba(232,93,58,0.12)" : "rgba(255,255,255,0.02)", border: count > 0 ? "1px solid rgba(232,93,58,0.3)" : "1px solid rgba(255,255,255,0.05)", borderRadius: "10px", padding: "12px 4px" }}>
-                  <div style={{ fontSize: "20px", fontWeight: "800", color: count > 0 ? "#e85d3a" : "#2a2a3a", fontFamily: "'Syne',sans-serif" }}>{count}</div>
-                  <div style={{ fontSize: "8px", color: "#444", marginTop: "5px", lineHeight: "1.4" }}>{step}</div>
+                <div style={{ background: count > 0 ? "#e8f5f1" : "#faf8f5", border: count > 0 ? "1px solid #a8d5c5" : "1px solid #e8e2da", borderRadius: "10px", padding: "12px 4px" }}>
+                  <div style={{ fontSize: "20px", fontWeight: "800", color: count > 0 ? "#5a9a8f" : "#c4bdb4", fontFamily: "'Syne',sans-serif" }}>{count}</div>
+                  <div style={{ fontSize: "8px", color: "#8a8279", marginTop: "5px", lineHeight: "1.4" }}>{step}</div>
                 </div>
               </div>
             );
@@ -614,26 +614,26 @@ function PositionsTab({ data }) {
       <div style={{ ...S.card, padding: 0, overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
-            <tr style={{ background: "rgba(255,255,255,0.04)" }}>
+            <tr style={{ background: "#faf8f5" }}>
               {["Role", "Centre", "HR Owner", "Step Progress", "Days Open", "Status", "Priority"].map(h => (
-                <th key={h} style={{ padding: "11px 14px", textAlign: "left", fontSize: "9px", color: "#444", fontWeight: "600", letterSpacing: "0.1em", textTransform: "uppercase", borderBottom: "1px solid rgba(255,255,255,0.05)", fontFamily: "'Syne',sans-serif" }}>{h}</th>
+                <th key={h} style={{ padding: "11px 14px", textAlign: "left", fontSize: "9px", color: "#8a8279", fontWeight: "600", letterSpacing: "0.1em", textTransform: "uppercase", borderBottom: "1px solid #e8e2da", fontFamily: "'Syne',sans-serif" }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {filtered.length === 0 && <tr><td colSpan={7} style={{ padding: "40px", textAlign: "center", color: "#333", fontSize: "13px" }}>No positions found</td></tr>}
+            {filtered.length === 0 && <tr><td colSpan={7} style={{ padding: "40px", textAlign: "center", color: "#8a8279", fontSize: "13px" }}>No positions found</td></tr>}
             {filtered.map(pos => {
               const sc = STATUS_CONFIG[pos.status] || STATUS_CONFIG.new;
               return (
-                <tr key={pos.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.02)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                  <td style={{ padding: "13px 14px", fontSize: "12px", fontWeight: "600", color: "#ddd" }}>{pos.role}</td>
-                  <td style={{ padding: "13px 14px", fontSize: "11px", color: "#666" }}>{pos.centre}</td>
-                  <td style={{ padding: "13px 14px", fontSize: "11px", color: "#666" }}>{pos.hr}</td>
+                <tr key={pos.id} style={{ borderBottom: "1px solid #f0ebe4" }} onMouseEnter={e => e.currentTarget.style.background = "#faf8f5"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                  <td style={{ padding: "13px 14px", fontSize: "12px", fontWeight: "600", color: "#3a3a3a" }}>{pos.role}</td>
+                  <td style={{ padding: "13px 14px", fontSize: "11px", color: "#8a8279" }}>{pos.centre}</td>
+                  <td style={{ padding: "13px 14px", fontSize: "11px", color: "#8a8279" }}>{pos.hr}</td>
                   <td style={{ padding: "13px 14px", minWidth: "140px" }}>
                     <div style={{ display: "flex", gap: "3px", marginBottom: "4px" }}>
                       {[1,2,3,4,5,6,7].map(s => <div key={s} style={{ flex: 1, height: "4px", borderRadius: "2px", background: s < pos.step ? "#e85d3a" : s === pos.step ? "#f59e0b" : "rgba(255,255,255,0.08)" }} />)}
                     </div>
-                    <div style={{ fontSize: "9px", color: "#555" }}>Step {pos.step} — {STEP_LABELS[pos.step]}</div>
+                    <div style={{ fontSize: "9px", color: "#8a8279" }}>Step {pos.step} — {STEP_LABELS[pos.step]}</div>
                   </td>
                   <td style={{ padding: "13px 14px" }}><span style={{ fontSize: "13px", fontWeight: "700", fontFamily: "'Syne',sans-serif", color: pos.daysOpen > 14 ? "#e85d3a" : pos.daysOpen > 7 ? "#f59e0b" : "#10b981" }}>{pos.daysOpen}d</span></td>
                   <td style={{ padding: "13px 14px" }}><span style={{ padding: "3px 9px", borderRadius: "20px", fontSize: "9px", fontWeight: "700", background: sc.bg, color: sc.color, letterSpacing: "0.06em" }}>{sc.label}</span></td>
@@ -651,26 +651,26 @@ function ComplianceTab({ data, onRemind }) {
   return (
     <div style={{ display: "grid", gap: "14px" }}>
       {data.compliance.map((hr, i) => (
-        <div key={i} style={{ ...S.card, border: `1px solid ${hr.percent === 100 ? "rgba(16,185,129,0.2)" : hr.percent < 50 ? "rgba(232,93,58,0.2)" : "rgba(255,255,255,0.07)"}`, display: "flex", alignItems: "center", gap: "18px" }}>
-          <div style={{ width: "42px", height: "42px", borderRadius: "50%", flexShrink: 0, background: hr.percent === 100 ? "linear-gradient(135deg,#10b981,#059669)" : hr.percent < 50 ? "linear-gradient(135deg,#e85d3a,#dc2626)" : "linear-gradient(135deg,#f59e0b,#d97706)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "15px", fontWeight: "700", color: "white", fontFamily: "'Syne',sans-serif" }}>{hr.name.charAt(0)}</div>
+        <div key={i} style={{ ...S.card, border: `1px solid ${hr.percent === 100 ? "#a8d5c5" : hr.percent < 50 ? "#e8b8a8" : "#e8e2da"}`, display: "flex", alignItems: "center", gap: "18px" }}>
+          <div style={{ width: "42px", height: "42px", borderRadius: "50%", flexShrink: 0, background: hr.percent === 100 ? "#5a9a8f" : hr.percent < 50 ? "#c4786a" : "#b8956a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "15px", fontWeight: "700", color: "white", fontFamily: "'Syne',sans-serif" }}>{hr.name.charAt(0)}</div>
           <div style={{ flex: 1 }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
               <div>
-                <div style={{ fontSize: "13px", fontWeight: "600", color: "#ddd" }}>{hr.name}</div>
-                <div style={{ fontSize: "10px", color: "#555", marginTop: "2px" }}>{hr.centre} · {hr.lastUpdated}</div>
+                <div style={{ fontSize: "13px", fontWeight: "600", color: "#3a3a3a" }}>{hr.name}</div>
+                <div style={{ fontSize: "10px", color: "#8a8279", marginTop: "2px" }}>{hr.centre} · {hr.lastUpdated}</div>
               </div>
               <div style={{ textAlign: "right" }}>
-                <div style={{ fontSize: "22px", fontWeight: "800", fontFamily: "'Syne',sans-serif", color: hr.percent === 100 ? "#10b981" : hr.percent < 50 ? "#e85d3a" : "#f59e0b" }}>{hr.percent}%</div>
-                <div style={{ fontSize: "10px", color: "#555" }}>{hr.compliant}/{hr.total} steps done</div>
+                <div style={{ fontSize: "22px", fontWeight: "800", fontFamily: "'Syne',sans-serif", color: hr.percent === 100 ? "#5a9a8f" : hr.percent < 50 ? "#c4786a" : "#b8956a" }}>{hr.percent}%</div>
+                <div style={{ fontSize: "10px", color: "#8a8279" }}>{hr.compliant}/{hr.total} steps done</div>
               </div>
             </div>
-            <div style={{ height: "5px", background: "rgba(255,255,255,0.06)", borderRadius: "3px", overflow: "hidden" }}>
-              <div style={{ height: "100%", borderRadius: "3px", width: `${hr.percent}%`, background: hr.percent === 100 ? "#10b981" : hr.percent < 50 ? "#e85d3a" : "#f59e0b" }} />
+            <div style={{ height: "5px", background: "#f0ebe4", borderRadius: "3px", overflow: "hidden" }}>
+              <div style={{ height: "100%", borderRadius: "3px", width: `${hr.percent}%`, background: hr.percent === 100 ? "#5a9a8f" : hr.percent < 50 ? "#c4786a" : "#b8956a" }} />
             </div>
             {hr.overdue > 0 && (
               <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "10px" }}>
-                <span style={{ fontSize: "11px", color: "#e85d3a" }}>⚠ {hr.overdue} overdue update{hr.overdue > 1 ? "s" : ""}</span>
-                <button onClick={() => onRemind(hr)} style={{ padding: "3px 11px", borderRadius: "5px", fontSize: "10px", fontWeight: "600", background: "rgba(232,93,58,0.12)", border: "1px solid rgba(232,93,58,0.25)", color: "#e85d3a", cursor: "pointer" }}>Send Reminder</button>
+                <span style={{ fontSize: "11px", color: "#c4786a" }}>⚠ {hr.overdue} overdue update{hr.overdue > 1 ? "s" : ""}</span>
+                <button onClick={() => onRemind(hr)} style={{ padding: "3px 11px", borderRadius: "5px", fontSize: "10px", fontWeight: "600", background: "#f5e8e4", border: "1px solid #d4b0a8", color: "#c4786a", cursor: "pointer" }}>Send Reminder</button>
               </div>
             )}
           </div>
@@ -683,24 +683,24 @@ function ComplianceTab({ data, onRemind }) {
 function InterviewsTab({ data }) {
   return (
     <div style={{ display: "grid", gap: "14px" }}>
-      {data.todayInterviews.length === 0 && <div style={{ ...S.card, textAlign: "center", padding: "60px", color: "#444" }}>No interviews today</div>}
+      {data.todayInterviews.length === 0 && <div style={{ ...S.card, textAlign: "center", padding: "60px", color: "#8a8279" }}>No interviews today</div>}
       {data.todayInterviews.map((iv, i) => (
         <div key={i} style={{ ...S.card, display: "flex", alignItems: "center", gap: "20px" }}>
-          <div style={{ textAlign: "center", padding: "12px 16px", background: "rgba(232,93,58,0.08)", borderRadius: "10px", borderBottom: "3px solid #e85d3a", flexShrink: 0 }}>
-            <div style={{ fontSize: "16px", fontWeight: "800", color: "#e85d3a", fontFamily: "'Syne',sans-serif" }}>{iv.time.split(" ")[0]}</div>
-            <div style={{ fontSize: "9px", color: "#666", marginTop: "2px" }}>{iv.time.split(" ")[1]}</div>
+          <div style={{ textAlign: "center", padding: "12px 16px", background: "#e8f5f1", borderRadius: "10px", borderBottom: "3px solid #5a9a8f", flexShrink: 0 }}>
+            <div style={{ fontSize: "16px", fontWeight: "800", color: "#c4786a", fontFamily: "'Syne',sans-serif" }}>{iv.time.split(" ")[0]}</div>
+            <div style={{ fontSize: "9px", color: "#8a8279", marginTop: "2px" }}>{iv.time.split(" ")[1]}</div>
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: "15px", fontWeight: "700", color: "#fff", fontFamily: "'Syne',sans-serif" }}>{iv.candidate}</div>
-            <div style={{ fontSize: "12px", color: "#666", marginTop: "3px" }}>{iv.role}</div>
-            <div style={{ fontSize: "11px", color: "#555", marginTop: "2px" }}>Interviewer: {iv.interviewer}</div>
+            <div style={{ fontSize: "15px", fontWeight: "700", color: "#3a3a3a", fontFamily: "'Syne',sans-serif" }}>{iv.candidate}</div>
+            <div style={{ fontSize: "12px", color: "#8a8279", marginTop: "3px" }}>{iv.role}</div>
+            <div style={{ fontSize: "11px", color: "#8a8279", marginTop: "2px" }}>Interviewer: {iv.interviewer}</div>
             <div style={{ marginTop: "10px" }}>
-              <span style={{ padding: "3px 9px", borderRadius: "20px", fontSize: "10px", fontWeight: "700", background: iv.round === "Final Round" ? "rgba(249,115,22,0.15)" : "rgba(99,102,241,0.15)", color: iv.round === "Final Round" ? "#f97316" : "#818cf8" }}>{iv.round}</span>
+              <span style={{ padding: "3px 9px", borderRadius: "20px", fontSize: "10px", fontWeight: "700", background: iv.round === "Final Round" ? "#fdf0e6" : "#e8f0f5", color: iv.round === "Final Round" ? "#b8956a" : "#6a9ab0" }}>{iv.round}</span>
             </div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <button style={{ padding: "8px 16px", borderRadius: "8px", fontSize: "11px", fontWeight: "600", background: "linear-gradient(135deg,#e85d3a,#f59e0b)", border: "none", color: "white", cursor: "pointer" }}>Join Meet</button>
-            <button style={{ padding: "8px 16px", borderRadius: "8px", fontSize: "11px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.09)", color: "#888", cursor: "pointer" }}>📋 Profile</button>
+            <button style={{ padding: "8px 16px", borderRadius: "8px", fontSize: "11px", fontWeight: "600", background: "#5a9a8f", border: "none", color: "white", cursor: "pointer" }}>Join Meet</button>
+            <button style={{ padding: "8px 16px", borderRadius: "8px", fontSize: "11px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.09)", color: "#8a8279", cursor: "pointer" }}>📋 Profile</button>
           </div>
         </div>
       ))}
@@ -714,11 +714,11 @@ function AlertsTab({ data, onRemind }) {
       {data.alerts.map(alert => {
         const c = ALERT_CONFIG[alert.type] || ALERT_CONFIG.info;
         return (
-          <div key={alert.id} style={{ ...S.card, padding: "14px 16px", borderLeft: `4px solid ${c.border}`, background: c.bg, display: "flex", alignItems: "center", gap: "12px" }}>
+          <div key={alert.id} style={{ ...S.card, padding: "14px 16px", borderLeft: `4px solid ${c.borderLight}`, background: c.bgLight, display: "flex", alignItems: "center", gap: "12px" }}>
             <span style={{ fontSize: "16px" }}>{c.icon}</span>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: "12px", color: "#ccc", lineHeight: "1.5" }}>{alert.message}</div>
-              <div style={{ fontSize: "10px", color: "#444", marginTop: "3px" }}>{alert.time}</div>
+              <div style={{ fontSize: "12px", color: "#6a6a6a", lineHeight: "1.5" }}>{alert.message}</div>
+              <div style={{ fontSize: "10px", color: "#8a8279", marginTop: "3px" }}>{alert.time}</div>
             </div>
             {alert.type !== "success" && (
               <button onClick={() => onRemind(alert)} style={{ padding: "6px 13px", borderRadius: "7px", fontSize: "10px", fontWeight: "600", background: `${c.border}20`, border: `1px solid ${c.border}40`, color: c.border, cursor: "pointer", whiteSpace: "nowrap" }}>Send Reminder</button>
@@ -799,42 +799,42 @@ export default function App() {
 
   return (
     <div style={S.app}>
-      <style>{`* { box-sizing:border-box; } ::-webkit-scrollbar{width:4px} ::-webkit-scrollbar-track{background:transparent} ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px} @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}} input::placeholder{color:#333} input:focus{border-color:rgba(232,93,58,0.4)!important}`}</style>
+      <style>{`* { box-sizing:border-box; } ::-webkit-scrollbar{width:4px} ::-webkit-scrollbar-track{background:transparent} ::-webkit-scrollbar-thumb{background:#d4cdc3;border-radius:2px} @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}} input::placeholder{color:#a0988e} input:focus{border-color:#5a9a8f!important}`}</style>
 
       <div style={S.sidebar}>
         <Logo />
         <nav style={{ padding: "14px 10px", flex: 1 }}>
-          <div style={{ fontSize: "8px", color: "#333", letterSpacing: "0.12em", textTransform: "uppercase", padding: "4px 10px 8px", fontFamily: "'Syne',sans-serif" }}>Navigation</div>
+          <div style={{ fontSize: "8px", color: "#8a8279", letterSpacing: "0.12em", textTransform: "uppercase", padding: "4px 10px 8px", fontFamily: "'Syne',sans-serif" }}>Navigation</div>
           {tabs.map(tab => <NavItem key={tab.id} tab={tab} active={activeTab === tab.id} onClick={() => setActiveTab(tab.id)} />)}
         </nav>
         <div style={{ padding: "10px 16px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-          <div style={{ fontSize: "18px", fontWeight: "700", color: "#e85d3a", fontFamily: "'Syne',sans-serif" }}>{time.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}</div>
-          <div style={{ fontSize: "9px", color: "#333", marginTop: "2px" }}>{time.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" })}</div>
+          <div style={{ fontSize: "18px", fontWeight: "700", color: "#c4786a", fontFamily: "'Syne',sans-serif" }}>{time.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}</div>
+          <div style={{ fontSize: "9px", color: "#8a8279", marginTop: "2px" }}>{time.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" })}</div>
         </div>
         <div style={{ padding: "12px 16px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "9px" }}>
-            <div style={{ width: "30px", height: "30px", borderRadius: "50%", background: "linear-gradient(135deg,#e85d3a,#8b5cf6)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: "700", color: "white", fontFamily: "'Syne',sans-serif" }}>D</div>
+            <div style={{ width: "30px", height: "30px", borderRadius: "50%", background: "linear-gradient(135deg,#5a9a8f,#7db9a8)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: "700", color: "white", fontFamily: "'Syne',sans-serif" }}>D</div>
             <div>
-              <div style={{ fontSize: "11px", fontWeight: "600", color: "#ccc" }}>Dinesh T.</div>
-              <div style={{ fontSize: "9px", color: isLive ? "#10b981" : "#555" }}>{isLive ? "🟢 Live data" : "⚫ Demo data"}</div>
+              <div style={{ fontSize: "11px", fontWeight: "600", color: "#6a6a6a" }}>Dinesh T.</div>
+              <div style={{ fontSize: "9px", color: isLive ? "#5a9a8f" : "#8a8279" }}>{isLive ? "🟢 Live data" : "⚫ Demo data"}</div>
             </div>
           </div>
         </div>
       </div>
 
       <div style={S.main}>
-        <div style={{ padding: "18px 28px", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10, background: "rgba(10,10,15,0.92)", backdropFilter: "blur(12px)" }}>
+        <div style={{ padding: "18px 28px", borderBottom: "1px solid #e8e2da", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10, background: "rgba(250,248,245,0.95)", backdropFilter: "blur(12px)" }}>
           <div>
-            <h1 style={{ margin: 0, fontSize: "18px", fontWeight: "700", color: "#fff", fontFamily: "'Syne',sans-serif" }}>
+            <h1 style={{ margin: 0, fontSize: "18px", fontWeight: "700", color: "#3a3a3a", fontFamily: "'Syne',sans-serif" }}>
               {tabs.find(t => t.id === activeTab)?.label}
-              {loading && <span style={{ fontSize: "11px", color: "#f59e0b", marginLeft: "10px", fontFamily: "'DM Sans',sans-serif", fontWeight: "400" }}>⏳ Loading...</span>}
+              {loading && <span style={{ fontSize: "11px", color: "#b8956a", marginLeft: "10px", fontFamily: "'DM Sans',sans-serif", fontWeight: "400" }}>⏳ Loading...</span>}
             </h1>
-            <div style={{ fontSize: "10px", color: "#333", marginTop: "2px" }}>{time.toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</div>
+            <div style={{ fontSize: "10px", color: "#8a8279", marginTop: "2px" }}>{time.toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</div>
           </div>
           <div style={{ display: "flex", gap: "8px" }}>
-            {config.taTrackerUrl && <button onClick={() => loadLiveData(config)} style={{ padding: "7px 14px", borderRadius: "8px", fontSize: "11px", background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)", color: "#10b981", cursor: "pointer", fontWeight: "500" }}>🔄 Refresh</button>}
-            <button onClick={() => handleRemind({ name: "all Centre HRs" })} style={{ padding: "7px 14px", borderRadius: "8px", fontSize: "11px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#777", cursor: "pointer" }}>📧 Send All Reminders</button>
-            <button onClick={() => setActiveTab("settings")} style={{ padding: "7px 14px", borderRadius: "8px", fontSize: "11px", fontWeight: "600", background: "linear-gradient(135deg,#e85d3a,#f59e0b)", border: "none", color: "white", cursor: "pointer", boxShadow: "0 3px 10px rgba(232,93,58,0.3)" }}>
+            {config.taTrackerUrl && <button onClick={() => loadLiveData(config)} style={{ padding: "7px 14px", borderRadius: "8px", fontSize: "11px", background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)", color: "#5a9a8f", cursor: "pointer", fontWeight: "500" }}>🔄 Refresh</button>}
+            <button onClick={() => handleRemind({ name: "all Centre HRs" })} style={{ padding: "7px 14px", borderRadius: "8px", fontSize: "11px", background: "#faf8f5", border: "1px solid rgba(255,255,255,0.08)", color: "#8a8279", cursor: "pointer" }}>📧 Send All Reminders</button>
+            <button onClick={() => setActiveTab("settings")} style={{ padding: "7px 14px", borderRadius: "8px", fontSize: "11px", fontWeight: "600", background: "#5a9a8f", border: "none", color: "white", cursor: "pointer", boxShadow: "0 3px 10px rgba(90,154,143,0.2)" }}>
               {config.taTrackerUrl ? "⚙ Settings" : "⚡ Connect Data"}
             </button>
           </div>
