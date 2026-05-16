@@ -61,16 +61,30 @@ function extractSheetId(url) {
 }
 
 async function fetchSheetData(sheetId, sheetName = "Sheet1") {
-  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
-  const res = await fetch(url);
+  // CSV export bypasses any active filters — always returns all rows
+  const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}&headers=1`;
+  const res = await fetch(csvUrl);
   const text = await res.text();
-  const startIdx = text.indexOf("{");
-  const endIdx = text.lastIndexOf("}");
-  const json = JSON.parse(text.substring(startIdx, endIdx + 1));
-  const cols = json.table.cols.map(c => (c.label || "").trim());
-  const rows = json.table.rows
-    .filter(row => row && row.c && row.c.some(cell => cell && cell.v !== null && cell.v !== ""))
-    .map(row => Object.fromEntries(cols.map((col, i) => [col, row.c[i]?.v ?? row.c[i]?.f ?? ""])));
+
+  const lines = text.trim().split("\n");
+  const headers = lines[0].split(",").map(h => h.replace(/^"|"$/g, "").trim());
+  const rows = lines.slice(1)
+    .filter(line => line.trim() !== "")
+    .map(line => {
+      const values = [];
+      let current = "";
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') { inQuotes = !inQuotes; }
+        else if (ch === "," && !inQuotes) { values.push(current.trim()); current = ""; }
+        else { current += ch; }
+      }
+      values.push(current.trim());
+      return Object.fromEntries(headers.map((h, i) => [h, values[i] ?? ""]));
+    })
+    .filter(row => Object.values(row).some(v => v !== ""));
+
   return rows;
 }
 
