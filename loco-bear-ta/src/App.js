@@ -49,7 +49,6 @@ const ALERT_CONFIG = {
   success: { border: "#10b981", bg: "rgba(16,185,129,0.07)", icon: "🟢" },
 };
 
-// Colour palette for centre dots/bars — cycles if more than 8 centres
 const CENTRE_COLOURS = [
   "#6366f1", "#e85d3a", "#f59e0b", "#10b981",
   "#8b5cf6", "#3b82f6", "#f97316", "#ec4899",
@@ -61,7 +60,6 @@ function extractSheetId(url) {
 }
 
 async function fetchSheetData(sheetId, sheetName = "Sheet1") {
-  // CSV export bypasses any active filters — always returns all rows
   const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&sheet=${encodeURIComponent(sheetName)}`;
   const res = await fetch(csvUrl);
   const text = await res.text();
@@ -139,7 +137,6 @@ function parseSheetToPositions(rows) {
     const daysOpen = calcDaysOpen(row);
     const status = inferStatusFromStep(step);
 
-    // ── Centre: read directly from "Centers" or "Centre" column ──
     const centre = (
       row["Centers"] ||
       row["Centre"] ||
@@ -211,7 +208,6 @@ function NavItem({ tab, active, onClick }) {
   );
 }
 
-// ── MODAL ─────────────────────────────────────────────────────────────────────
 function PositionModal({ title, positions, onClose }) {
   if (!positions) return null;
   return (
@@ -283,7 +279,6 @@ function Toast({ message, type = "success", onClose }) {
     </div>
   );
 }
-
 function SettingsTab({ config, onSave, onTest }) {
   const [form, setForm] = useState(config);
   const [testing, setTesting] = useState({});
@@ -364,12 +359,10 @@ function SettingsTab({ config, onSave, onTest }) {
   );
 }
 
-// ── CENTRE BREAKDOWN CARD ─────────────────────────────────────────────────────
 function CentreBreakdown({ positions }) {
   const active = positions.filter(p => p.status !== "closed");
   const total = active.length;
 
-  // Build centre → count map, reading the "centre" field set during sheet parse
   const centreMap = {};
   active.forEach(p => {
     const key = (p.centre || "Unknown").trim();
@@ -394,17 +387,12 @@ function CentreBreakdown({ positions }) {
         const colour = CENTRE_COLOURS[i % CENTRE_COLOURS.length];
         return (
           <div key={centre} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 0", borderBottom: i < sorted.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
-            {/* Colour dot */}
             <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: colour, flexShrink: 0 }} />
-            {/* Centre name */}
             <div style={{ fontSize: "11px", color: "#bbb", minWidth: "90px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{centre}</div>
-            {/* Bar */}
             <div style={{ flex: 1, height: "4px", background: "rgba(255,255,255,0.07)", borderRadius: "2px", overflow: "hidden" }}>
               <div style={{ height: "100%", borderRadius: "2px", width: `${pct}%`, background: colour, transition: "width 0.4s ease" }} />
             </div>
-            {/* Count */}
             <span style={{ fontSize: "12px", fontWeight: "700", color: "#ddd", minWidth: "18px", textAlign: "right" }}>{count}</span>
-            {/* Percent */}
             <span style={{ fontSize: "10px", color: "#444", minWidth: "32px", textAlign: "right" }}>{pct}%</span>
           </div>
         );
@@ -413,6 +401,63 @@ function CentreBreakdown({ positions }) {
   );
 }
 
+// ── ROLE BREAKDOWN CARD (NEW — replaces Compliance Snapshot) ─────────────────
+function RoleBreakdown({ positions, onOpenModal }) {
+  const active = positions.filter(p => p.status !== "closed");
+  const total = active.length;
+
+  const roleMap = {};
+  active.forEach(p => {
+    const key = (p.role || "Unknown").trim();
+    roleMap[key] = (roleMap[key] || 0) + 1;
+  });
+
+  const sorted = Object.entries(roleMap).sort((a, b) => b[1] - a[1]);
+
+  return (
+    <div style={S.card}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+        <div style={{ fontSize: "12px", fontWeight: "600", color: "#fff", fontFamily: "'Syne',sans-serif" }}>Open positions by role</div>
+        <span style={{ fontSize: "10px", color: "#555" }}>{total} active</span>
+      </div>
+
+      {sorted.length === 0 && (
+        <div style={{ fontSize: "12px", color: "#444", textAlign: "center", padding: "20px 0" }}>No active positions</div>
+      )}
+
+      {sorted.map(([role, count], i) => {
+        const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+        const colour = CENTRE_COLOURS[i % CENTRE_COLOURS.length];
+        return (
+          <div 
+            key={role} 
+            style={{ 
+              display: "flex", 
+              alignItems: "center", 
+              gap: "10px", 
+              padding: "8px 0", 
+              borderBottom: i < sorted.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
+              cursor: "pointer",
+              transition: "background 0.15s",
+              borderRadius: "4px"
+            }}
+            onClick={() => onOpenModal(`Role: ${role}`, active.filter(p => p.role === role))}
+            onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}
+            onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+          >
+            <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: colour, flexShrink: 0 }} />
+            <div style={{ fontSize: "11px", color: "#bbb", minWidth: "120px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flex: 1 }}>{role}</div>
+            <div style={{ flex: 2, height: "4px", background: "rgba(255,255,255,0.07)", borderRadius: "2px", overflow: "hidden" }}>
+              <div style={{ height: "100%", borderRadius: "2px", width: `${pct}%`, background: colour, transition: "width 0.4s ease" }} />
+            </div>
+            <span style={{ fontSize: "12px", fontWeight: "700", color: "#ddd", minWidth: "18px", textAlign: "right" }}>{count}</span>
+            <span style={{ fontSize: "10px", color: "#444", minWidth: "32px", textAlign: "right" }}>{pct}%</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 function DashboardTab({ data, isLive, onOpenModal }) {
   const today = new Date();
 
@@ -456,7 +501,6 @@ function DashboardTab({ data, isLive, onOpenModal }) {
         </div>
       )}
 
-      {/* ── Stat Cards ── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: "14px", marginBottom: "24px" }}>
         <StatCard
           label="Active Open Positions" value={data.openPositions.filter(p => p.status !== "closed").length}
@@ -515,32 +559,12 @@ function DashboardTab({ data, isLive, onOpenModal }) {
         />
       </div>
 
-      {/* ── Centre Breakdown + Compliance ── */}
+      {/* ── Centre Breakdown + Role Breakdown ── */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
-
-        {/* LEFT — Centre breakdown (mapped from Centers column) */}
         <CentreBreakdown positions={data.openPositions} />
-
-        {/* RIGHT — Compliance snapshot */}
-        <div style={S.card}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
-            <div style={{ fontSize: "12px", fontWeight: "600", color: "#fff", fontFamily: "'Syne',sans-serif" }}>Compliance Snapshot</div>
-          </div>
-          {data.compliance.map((hr, i) => (
-            <div key={i} style={{ marginBottom: "10px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-                <span style={{ fontSize: "11px", color: "#bbb" }}>{hr.name}</span>
-                <span style={{ fontSize: "11px", fontWeight: "700", color: hr.percent === 100 ? "#10b981" : hr.percent < 50 ? "#e85d3a" : "#f59e0b" }}>{hr.percent}%</span>
-              </div>
-              <div style={{ height: "4px", background: "rgba(255,255,255,0.07)", borderRadius: "2px", overflow: "hidden" }}>
-                <div style={{ height: "100%", borderRadius: "2px", width: `${hr.percent}%`, background: hr.percent === 100 ? "#10b981" : hr.percent < 50 ? "#e85d3a" : "#f59e0b" }} />
-              </div>
-            </div>
-          ))}
-        </div>
+        <RoleBreakdown positions={data.openPositions} onOpenModal={onOpenModal} />
       </div>
 
-      {/* ── Pipeline ── */}
       <div style={S.card}>
         <div style={{ fontSize: "12px", fontWeight: "600", color: "#fff", fontFamily: "'Syne',sans-serif", marginBottom: "16px" }}>Hiring Pipeline — Positions by Step</div>
         <div style={{ display: "flex", gap: "8px" }}>
@@ -608,7 +632,6 @@ function PositionsTab({ data }) {
     </div>
   );
 }
-
 function ComplianceTab({ data, onRemind }) {
   return (
     <div style={{ display: "grid", gap: "14px" }}>
@@ -693,7 +716,6 @@ function AlertsTab({ data, onRemind }) {
 }
 
 const DEFAULT_CONFIG = { taTrackerUrl: "", taTrackerSheet: "Sheet1", candidateTrackerUrl: "", interviewTrackerUrl: "", alertEmail: "", overdueThreshold: 1, centreHREmails: "" };
-
 export default function App() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [config, setConfig] = useState(() => { try { return JSON.parse(localStorage.getItem("ta_config")) || DEFAULT_CONFIG; } catch { return DEFAULT_CONFIG; } });
