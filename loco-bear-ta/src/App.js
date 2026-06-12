@@ -421,9 +421,9 @@ function DashboardTab({ data, isLive, onOpenModal, offerEntries }) {
   // ── Offer & Joining stats — from dedicated sheet if loaded, else fall back to TA Tracker ──
   const useOfferSheet = Array.isArray(offerEntries);
 
-  const joined     = useOfferSheet ? offerEntries.filter(e => e.joiningStatus.toLowerCase() === "joined")     : data.openPositions.filter(p => p.joiningStatus.toLowerCase() === "joined");
-  const notJoined  = useOfferSheet ? offerEntries.filter(e => e.joiningStatus.toLowerCase() === "not joined") : data.openPositions.filter(p => p.joiningStatus.toLowerCase() === "not joined");
-  const offered    = useOfferSheet ? offerEntries.filter(e => e.joiningStatus.toLowerCase() === "offered")    : data.openPositions.filter(p => p.offerCandidate && p.offerCandidate.toString().trim() !== "" && p.doj && p.doj.toString().trim() !== "" && p.joiningStatus.trim() === "");
+  const joined     = useOfferSheet ? offerEntries.filter(e => (e.joiningStatus || "").toLowerCase() === "joined")     : data.openPositions.filter(p => (p.joiningStatus || "").toLowerCase() === "joined");
+  const notJoined  = useOfferSheet ? offerEntries.filter(e => (e.joiningStatus || "").toLowerCase() === "not joined") : data.openPositions.filter(p => (p.joiningStatus || "").toLowerCase() === "not joined");
+  const offered    = useOfferSheet ? offerEntries.filter(e => (e.joiningStatus || "").toLowerCase() === "offered")    : data.openPositions.filter(p => p.offerCandidate && p.offerCandidate.toString().trim() !== "" && p.doj && p.doj.toString().trim() !== "" && (p.joiningStatus || "").trim() === "");
 
   const total      = joined.length + notJoined.length;
   const ratio      = total > 0 ? Math.round((joined.length / total) * 100) : 0;
