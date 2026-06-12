@@ -701,8 +701,9 @@ export default function App() {
   const [offerEntries, setOfferEntries] = useState(null); // null = not loaded yet
 
   useEffect(() => { const t = setInterval(() => setTime(new Date()), 60000); return () => clearInterval(t); }, []);
-  const showToast = (message, type = "success") => setToast({ message, type });
-  const openModal = (title, positions) => setModal({ title, positions });
+
+  const showToast = useCallback((message, type = "success") => setToast({ message, type }), []);
+  const openModal = useCallback((title, positions) => setModal({ title, positions }), []);
 
   const loadOfferData = useCallback(async (cfg) => {
     if (!cfg.offerTrackerUrl) return;
@@ -722,9 +723,9 @@ export default function App() {
           remarks: (r["Remarks"] || "").trim(),
         }));
       setOfferEntries(entries);
-      showToast(`Offer tracker loaded — ${entries.length} entries`);
+      setToast({ message: `Offer tracker loaded — ${entries.length} entries`, type: "success" });
     } catch (e) {
-      showToast("Could not load Offer & Joining sheet. Check sharing settings.", "error");
+      setToast({ message: "Could not load Offer & Joining sheet. Check sharing settings.", type: "error" });
     }
   }, []);
 
@@ -739,12 +740,12 @@ export default function App() {
       if (positions.length > 0) {
         setData(prev => ({ ...prev, openPositions: positions }));
         setIsLive(true);
-        showToast(`Loaded ${positions.length} positions from Google Sheets!`);
+        setToast({ message: `Loaded ${positions.length} positions from Google Sheets!`, type: "success" });
       } else {
-        showToast("Sheet connected but no data found. Check your column names match.", "error");
+        setToast({ message: "Sheet connected but no data found. Check your column names match.", type: "error" });
       }
     } catch (e) {
-      showToast("Could not load sheet. Make sure sharing is set to 'Anyone with the link'.", "error");
+      setToast({ message: "Could not load sheet. Make sure sharing is set to 'Anyone with the link'.", type: "error" });
     }
     setLoading(false);
   }, []);
