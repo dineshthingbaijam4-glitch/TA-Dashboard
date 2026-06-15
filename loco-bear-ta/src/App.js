@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 
 const MOCK_DATA = {
+  avgTat: 16,
+  tatCount: 2,
   openPositions: [
     { id: 1, role: "Marketing Manager", centre: "Bangalore", step: 4, daysOpen: 12, hr: "Nisarga D.", status: "interview", priority: "high", joiningStatus: "", doj: "", _receiveDate: "2026-06-01", _closeDate: "" },
     { id: 2, role: "Games Experience Executive", centre: "Loco Lane", step: 3, daysOpen: 8, hr: "Nisarga D.", status: "screening", priority: "medium", joiningStatus: "", doj: "", _receiveDate: "2026-06-05", _closeDate: "" },
@@ -123,7 +125,7 @@ function calcDaysOpen(row) {
 }
 
 function parseSheetToPositions(rows) {
-  return rows.map((row, i) => {
+  const allMapped = rows.map((row, i) => {
     const step = inferStepFromRow(row);
     const daysOpen = calcDaysOpen(row);
     const status = inferStatusFromStep(step);
@@ -148,14 +150,26 @@ function parseSheetToPositions(rows) {
       payscaleMax: row["Payscale Maximum"] || "",
       doj: row["DOJ"] || "",
       joiningStatus: (row["Joining Status"] || "").toString().trim(),
-      _receiveDate: row["Position receive date"] || row["Position Receive Date"] || "",
-      _closeDate: row["Position close date / Offer Letter release date"] || row["Position close date"] || "",
+      _receiveDate: row["Position receive date"] || "",
+      _closeDate: row["Position close date / Offer Letter release date"] || "",
     };
-  }).filter(p => {
-    if (!p.role || p.role === "") return false;
+  }).filter(p => p.role && p.role !== "");
+
+  // TAT: all rows with both dates (regardless of action status)
+  const tatRows = allMapped.filter(p => p._receiveDate && p._closeDate && !isNaN(new Date(p._receiveDate)) && !isNaN(new Date(p._closeDate)));
+  const avgTat = tatRows.length > 0
+    ? Math.round(tatRows.reduce((sum, p) => sum + Math.max(0, Math.floor((new Date(p._closeDate) - new Date(p._receiveDate)) / 86400000)), 0) / tatRows.length)
+    : null;
+
+  // Active positions: only "in progress"
+  const active = allMapped.filter(p => {
     const action = (p._action || "").toLowerCase().trim();
     return action === "in progress" || action === "inprogress";
   });
+
+  active._avgTat = avgTat;
+  active._tatCount = tatRows.length;
+  return active;
 }
 
 // ── COMPONENTS ────────────────────────────────────────────────────────────────
@@ -418,19 +432,8 @@ function DashboardTab({ data, isLive, onOpenModal, onOpenDojModal, onOpenOfferMo
         <StatCard label="Overdue Positions" value={overduePositions.length} sub="past expected closure date" color="#e85d3a" icon="⚠️" clickable={overduePositions.length > 0} onClick={() => overduePositions.length > 0 && onOpenModal("Overdue Positions", overduePositions, false)} />
         <StatCard
           label="Average TAT"
-          value={(() => {
-            const closed = data.openPositions.filter(p => {
-              const r = p._receiveDate; const c = p._closeDate;
-              return r && c && !isNaN(new Date(r)) && !isNaN(new Date(c));
-            });
-            if (closed.length === 0) return "—";
-            const avg = closed.reduce((sum, p) => {
-              const diff = Math.max(0, Math.floor((new Date(p._closeDate) - new Date(p._receiveDate)) / 86400000));
-              return sum + diff;
-            }, 0) / closed.length;
-            return `${Math.round(avg)}d`;
-          })()}
-          sub={`based on ${data.openPositions.filter(p => p._receiveDate && p._closeDate).length} closed/offered roles`}
+          value={data.avgTat != null ? `${data.avgTat}d` : "—"}
+          sub={`based on ${data.tatCount || 0} closed/offered roles`}
           color="#10b981" icon="⏱️" clickable={false}
         />
         <StatCard
@@ -682,7 +685,7 @@ export default function App() {
       const rows = await fetchSheetData(sheetId, cfg.taTrackerSheet || "Sheet1");
       const positions = parseSheetToPositions(rows);
       if (positions.length > 0) {
-        setData(prev => ({ ...prev, openPositions: positions }));
+        setData(prev => ({ ...prev, openPositions: positions, avgTat: positions._avgTat, tatCount: positions._tatCount }));
         setIsLive(true);
         setToast({ message: `Loaded ${positions.length} positions from Google Sheets!`, type: "success" });
       } else {
