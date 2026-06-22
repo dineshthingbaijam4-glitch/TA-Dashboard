@@ -27,6 +27,83 @@ const STATUS_CONFIG = {
 };
 const CENTRE_COLOURS = ["#6366f1","#e85d3a","#f59e0b","#10b981","#8b5cf6","#3b82f6","#f97316","#ec4899"];
 
+// ── ROBUST DATE PARSER ────────────────────────────────────────────────────────
+// Handles all the mixed formats found in the sheet:
+//   MM-DD-YYYY  (09-17-2025)
+//   DD/MM/YYYY  (23/01/2026)  — day > 12 is a dead giveaway
+//   MM/DD/YYYY  (02/25/2026)  — month <= 12, day > 12
+//   D-Mon-YYYY  (5-May-2026)
+//   Mon-D-YYYY  (May-5-2026)
+//   MM-DD-YYYY with single digits (9-12-2025, 10-1-2025)
+//   Excel serial numbers
+//   "On hold", typos → returns null
+function parseFlexibleDate(raw) {
+  if (!raw) return null;
+  const s = String(raw).trim();
+  if (!s || s.toLowerCase() === "on hold" || s.toLowerCase() === "tbd") return null;
+
+  // Excel serial number
+  if (/^\d{4,6}$/.test(s)) {
+    const serial = parseInt(s);
+    if (serial > 40000 && serial < 60000) {
+      return new Date(new Date(1899, 11, 30).getTime() + serial * 86400000);
+    }
+  }
+
+  // Named month formats: "5-May-2026", "May-5-2026", "30-Apr-2026"
+  const MONTHS = { jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11 };
+  const namedMonth = s.match(/^(\d{1,2})[-\s]([A-Za-z]{3,})[-\s](\d{4})$/);
+  if (namedMonth) {
+    const [, d, m, y] = namedMonth;
+    const mo = MONTHS[m.slice(0,3).toLowerCase()];
+    if (mo !== undefined) return new Date(parseInt(y), mo, parseInt(d));
+  }
+  const namedMonthRev = s.match(/^([A-Za-z]{3,})[-\s](\d{1,2})[-\s](\d{4})$/);
+  if (namedMonthRev) {
+    const [, m, d, y] = namedMonthRev;
+    const mo = MONTHS[m.slice(0,3).toLowerCase()];
+    if (mo !== undefined) return new Date(parseInt(y), mo, parseInt(d));
+  }
+
+  // Numeric formats: split on / or -
+  const sep = s.includes("/") ? "/" : "-";
+  const parts = s.split(sep).map(p => parseInt(p, 10));
+  if (parts.length !== 3 || parts.some(isNaN)) return null;
+
+  let [a, b, c] = parts;
+
+  // If last part is 4-digit year → a and b are day/month or month/day
+  if (c > 1900) {
+    const year = c;
+    if (a > 12) {
+      // a must be day, b is month → DD/MM/YYYY or DD-MM-YYYY
+      return new Date(year, b - 1, a);
+    } else if (b > 12) {
+      // b must be day, a is month → MM/DD/YYYY or MM-DD-YYYY
+      return new Date(year, a - 1, b);
+    } else {
+      // Ambiguous: both a and b ≤ 12
+      // Your sheet uses MM-DD-YYYY for dash format and DD/MM/YYYY for slash format
+      if (sep === "-") return new Date(year, a - 1, b); // MM-DD-YYYY
+      else return new Date(year, b - 1, a);              // DD/MM/YYYY
+    }
+  }
+
+  // If first part is 4-digit year → YYYY/MM/DD or YYYY-MM-DD
+  if (a > 1900) {
+    return new Date(a, b - 1, c);
+  }
+
+  return null;
+}
+
+function dateDiffDays(d1, d2) {
+  if (!d1 || !d2) return null;
+  const diff = Math.floor((d2 - d1) / 86400000);
+  return diff >= 0 ? diff : null;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 function getTheme(dark) {
   return dark ? {
     bg:"#0a0a0f", bgGrad:"radial-gradient(ellipse 80% 50% at 50% -20%, rgba(232,93,58,0.08), transparent)",
@@ -114,14 +191,9 @@ function inferStatusFromStep(step) {
 function calcDaysOpen(row) {
   const dateStr = row["Position receive date"] || row["Position Receive Date"] || "";
   if (!dateStr) return 0;
-  try {
-    if (typeof dateStr === "number") {
-      const d = new Date(new Date(1899,11,30).getTime() + dateStr * 86400000);
-      return Math.floor((new Date() - d) / 86400000);
-    }
-    const d = new Date(dateStr);
-    return isNaN(d) ? 0 : Math.floor((new Date() - d) / 86400000);
-  } catch { return 0; }
+  const d = parseFlexibleDate(dateStr);
+  if (!d || isNaN(d)) return 0;
+  return Math.max(0, Math.floor((new Date() - d) / 86400000));
 }
 
 function parseSheetToPositions(rows) {
@@ -130,6 +202,10 @@ function parseSheetToPositions(rows) {
     const daysOpen = calcDaysOpen(row);
     const status = inferStatusFromStep(step);
     const centre = (row["Centers"] || row["Centre"] || row["Center"] || "Unknown").toString().trim();
+
+    const rawReceive = row["Position receive date"] || "";
+    const rawClose   = row["Position close date / Offer Letter release date"] || "";
+
     return {
       id: i + 1,
       role: (row["Role"] || row["Role "] || "").trim(),
@@ -150,15 +226,26 @@ function parseSheetToPositions(rows) {
       payscaleMax: row["Payscale Maximum"] || "",
       doj: row["DOJ"] || "",
       joiningStatus: (row["Joining Status"] || "").toString().trim(),
-      _receiveDate: row["Position receive date"] || "",
-      _closeDate: row["Position close date / Offer Letter release date"] || "",
+      _receiveDate: rawReceive,
+      _closeDate:   rawClose,
+      // Parsed Date objects for TAT calculation
+      _parsedReceive: parseFlexibleDate(rawReceive),
+      _parsedClose:   parseFlexibleDate(rawClose),
     };
   }).filter(p => p.role && p.role !== "");
 
-  // TAT: all rows with both dates (regardless of action status)
-  const tatRows = allMapped.filter(p => p._receiveDate && p._closeDate && !isNaN(new Date(p._receiveDate)) && !isNaN(new Date(p._closeDate)));
+  // TAT: rows with both dates parseable and close >= receive
+  const tatRows = allMapped.filter(p => {
+    if (!p._parsedReceive || !p._parsedClose) return false;
+    if (isNaN(p._parsedReceive) || isNaN(p._parsedClose)) return false;
+    return p._parsedClose >= p._parsedReceive;
+  });
+
   const avgTat = tatRows.length > 0
-    ? Math.round(tatRows.reduce((sum, p) => sum + Math.max(0, Math.floor((new Date(p._closeDate) - new Date(p._receiveDate)) / 86400000)), 0) / tatRows.length)
+    ? Math.round(
+        tatRows.reduce((sum, p) => sum + Math.floor((p._parsedClose - p._parsedReceive) / 86400000), 0)
+        / tatRows.length
+      )
     : null;
 
   // Active positions: only "in progress"
@@ -207,7 +294,6 @@ function Toast({ message, type = "success", onClose }) {
   );
 }
 
-// Modal supports 3 modes: default (positions table), showDoj (yet to join), showOffer (joining tracker)
 function PositionModal({ title, positions, onClose, T, showDoj, showOffer }) {
   const [filter, setFilter] = useState("all");
   if (!positions) return null;
@@ -218,14 +304,11 @@ function PositionModal({ title, positions, onClose, T, showDoj, showOffer }) {
     : positions;
 
   const statusColor = (s) => (s || "").toLowerCase() === "joined" ? "#10b981" : (s || "").toLowerCase() === "not joined" ? "#e85d3a" : "#f59e0b";
-
   const colCount = showOffer ? 6 : showDoj ? 4 : 8;
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }} onClick={onClose}>
       <div style={{ background: T.modalBg, border: `1px solid ${T.modalBdr}`, borderRadius: "16px", width: "90%", maxWidth: isSpecial ? "780px" : "900px", maxHeight: "82vh", overflow: "hidden", display: "flex", flexDirection: "column" }} onClick={e => e.stopPropagation()}>
-
-        {/* Header */}
         <div style={{ padding: "18px 24px", borderBottom: `1px solid ${T.cardBdr}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
             <div style={{ fontSize: "15px", fontWeight: "700", color: T.text, fontFamily: "'Syne',sans-serif" }}>{title}</div>
@@ -234,14 +317,13 @@ function PositionModal({ title, positions, onClose, T, showDoj, showOffer }) {
           <button onClick={onClose} style={{ background: T.btnSecBg, border: `1px solid ${T.btnSecBdr}`, borderRadius: "8px", color: T.textSub, fontSize: "13px", padding: "6px 12px", cursor: "pointer" }}>✕ Close</button>
         </div>
 
-        {/* Filter pills for offer modal */}
         {showOffer && (
           <div style={{ padding: "12px 24px", borderBottom: `1px solid ${T.cardBdr}`, display: "flex", gap: "8px" }}>
             {[
-              { key: "all",        label: "All",        count: positions.length },
-              { key: "joined",     label: "✅ Joined",   count: positions.filter(p => (p.joiningStatus||"").toLowerCase()==="joined").length },
+              { key: "all",        label: "All",          count: positions.length },
+              { key: "joined",     label: "✅ Joined",     count: positions.filter(p => (p.joiningStatus||"").toLowerCase()==="joined").length },
               { key: "not joined", label: "❌ Not Joined", count: positions.filter(p => (p.joiningStatus||"").toLowerCase()==="not joined").length },
-              { key: "offered",    label: "🕐 Offered",  count: positions.filter(p => (p.joiningStatus||"").toLowerCase()==="offered").length },
+              { key: "offered",    label: "🕐 Offered",    count: positions.filter(p => (p.joiningStatus||"").toLowerCase()==="offered").length },
             ].map(f => (
               <button key={f.key} onClick={() => setFilter(f.key)} style={{ padding: "5px 14px", borderRadius: "20px", border: "none", cursor: "pointer", fontSize: "11px", fontWeight: "600", background: filter === f.key ? "#e85d3a" : T.btnSecBg, color: filter === f.key ? "white" : T.textSub, transition: "all 0.15s" }}>
                 {f.label} <span style={{ opacity: 0.7, fontSize: "10px" }}>({f.count})</span>
@@ -250,7 +332,6 @@ function PositionModal({ title, positions, onClose, T, showDoj, showOffer }) {
           </div>
         )}
 
-        {/* Table */}
         <div style={{ overflow: "auto", flex: 1 }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead style={{ position: "sticky", top: 0, background: T.modalBg, zIndex: 1 }}>
@@ -265,9 +346,7 @@ function PositionModal({ title, positions, onClose, T, showDoj, showOffer }) {
             </thead>
             <tbody>
               {displayPositions.length === 0 && <tr><td colSpan={colCount} style={{ padding: "40px", textAlign: "center", color: T.textMuted }}>No records found</td></tr>}
-
               {displayPositions.map((pos, i) => {
-                // ── Offer / Joining tracker view ──
                 if (showOffer) {
                   const sc = statusColor(pos.joiningStatus);
                   const isNotJoined = (pos.joiningStatus || "").toLowerCase() === "not joined";
@@ -275,27 +354,15 @@ function PositionModal({ title, positions, onClose, T, showDoj, showOffer }) {
                     <tr key={i} style={{ borderBottom: `1px solid ${T.tableBdr}`, background: isNotJoined ? "rgba(232,93,58,0.03)" : "transparent" }}
                       onMouseEnter={e => e.currentTarget.style.background = T.rowHover}
                       onMouseLeave={e => e.currentTarget.style.background = isNotJoined ? "rgba(232,93,58,0.03)" : "transparent"}>
-                      <td style={{ padding: "13px 14px" }}>
-                        <div style={{ fontSize: "12px", fontWeight: "700", color: T.text }}>{pos.name || "—"}</div>
-                      </td>
+                      <td style={{ padding: "13px 14px" }}><div style={{ fontSize: "12px", fontWeight: "700", color: T.text }}>{pos.name || "—"}</div></td>
                       <td style={{ padding: "13px 14px", fontSize: "11px", color: T.textSub }}>{pos.role || "—"}</td>
                       <td style={{ padding: "13px 14px", fontSize: "11px", color: T.textSub }}>{pos.centre || "—"}</td>
-                      <td style={{ padding: "13px 14px" }}>
-                        <span style={{ fontSize: "12px", fontWeight: "700", color: "#8b5cf6" }}>{pos.doj || "—"}</span>
-                      </td>
-                      <td style={{ padding: "13px 14px" }}>
-                        <span style={{ padding: "4px 11px", borderRadius: "20px", fontSize: "10px", fontWeight: "700", background: `${sc}18`, color: sc, whiteSpace: "nowrap" }}>
-                          {(pos.joiningStatus || "Offered")}
-                        </span>
-                      </td>
-                      <td style={{ padding: "13px 14px", fontSize: "11px", color: isNotJoined ? "#e85d3a" : T.textMuted, fontStyle: pos.remarks ? "normal" : "italic", maxWidth: "220px" }}>
-                        {pos.remarks || (isNotJoined ? "No reason provided" : "—")}
-                      </td>
+                      <td style={{ padding: "13px 14px" }}><span style={{ fontSize: "12px", fontWeight: "700", color: "#8b5cf6" }}>{pos.doj || "—"}</span></td>
+                      <td style={{ padding: "13px 14px" }}><span style={{ padding: "4px 11px", borderRadius: "20px", fontSize: "10px", fontWeight: "700", background: `${sc}18`, color: sc, whiteSpace: "nowrap" }}>{pos.joiningStatus || "Offered"}</span></td>
+                      <td style={{ padding: "13px 14px", fontSize: "11px", color: isNotJoined ? "#e85d3a" : T.textMuted, fontStyle: pos.remarks ? "normal" : "italic", maxWidth: "220px" }}>{pos.remarks || (isNotJoined ? "No reason provided" : "—")}</td>
                     </tr>
                   );
                 }
-
-                // ── Yet to Join (DOJ) view ──
                 if (showDoj) {
                   const sc = statusColor(pos.joiningStatus);
                   return (
@@ -305,17 +372,11 @@ function PositionModal({ title, positions, onClose, T, showDoj, showOffer }) {
                         <div style={{ fontSize: "10px", color: T.textSub, marginTop: "2px" }}>{pos.role || "—"}</div>
                       </td>
                       <td style={{ padding: "13px 14px", fontSize: "11px", color: T.textSub }}>{pos.centre || "—"}</td>
-                      <td style={{ padding: "13px 14px" }}>
-                        <div style={{ fontSize: "12px", fontWeight: "700", color: "#8b5cf6" }}>{pos.doj || pos.expectedClosure || "—"}</div>
-                      </td>
-                      <td style={{ padding: "13px 14px" }}>
-                        <span style={{ padding: "3px 10px", borderRadius: "20px", fontSize: "10px", fontWeight: "700", background: `${sc}18`, color: sc }}>{pos.joiningStatus || "Offered"}</span>
-                      </td>
+                      <td style={{ padding: "13px 14px" }}><div style={{ fontSize: "12px", fontWeight: "700", color: "#8b5cf6" }}>{pos.doj || pos.expectedClosure || "—"}</div></td>
+                      <td style={{ padding: "13px 14px" }}><span style={{ padding: "3px 10px", borderRadius: "20px", fontSize: "10px", fontWeight: "700", background: `${sc}18`, color: sc }}>{pos.joiningStatus || "Offered"}</span></td>
                     </tr>
                   );
                 }
-
-                // ── Default positions view ──
                 const sc = STATUS_CONFIG[pos.status] || STATUS_CONFIG.new;
                 const isOverdue = pos.expectedClosure && new Date(pos.expectedClosure) < new Date() && pos.status !== "closed";
                 return (
@@ -341,7 +402,6 @@ function PositionModal({ title, positions, onClose, T, showDoj, showOffer }) {
   );
 }
 
-// Clickable centre breakdown card
 function CentreBreakdown({ positions, T, onCentreClick }) {
   const active = positions.filter(p => p.status !== "closed");
   const total = active.length;
@@ -420,14 +480,12 @@ function DashboardTab({ data, isLive, onOpenModal, onOpenDojModal, onOpenOfferMo
         </div>
       )}
 
-      {/* Stat Cards — row 1: 3 main KPIs */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "14px", marginBottom: "14px" }}>
         <StatCard label="Active Open Positions" value={data.openPositions.filter(p => p.status !== "closed").length} sub="across all centres" color="#6366f1" icon="📋" clickable={true} onClick={() => onOpenModal("Active Positions", data.openPositions.filter(p => p.status !== "closed"), false)} />
         <StatCard label="Offer → Joining Ratio" value={`${ratio}%`} sub={`${joined.length} joined · ${notJoined.length} not joining · ${offered.length} pending`} color="#06b6d4" icon="🤝" clickable={allOffered.length > 0} onClick={() => allOffered.length > 0 && onOpenOfferModal("Offer → Joining Tracker", allOffered)} />
         <StatCard label="Yet to Join" value={yetToJoin.length} sub={useOfferSheet ? "status = Offered in joining tracker" : "offer & DOJ set, status pending"} color="#8b5cf6" icon="🕐" clickable={yetToJoin.length > 0} onClick={() => yetToJoin.length > 0 && onOpenDojModal("Yet to Join — DOJ Details", yetToJoin)} />
       </div>
 
-      {/* Stat Cards — row 2: overdue, avg TAT, recently added */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "14px", marginBottom: "24px" }}>
         <StatCard label="Overdue Positions" value={overduePositions.length} sub="past expected closure date" color="#e85d3a" icon="⚠️" clickable={overduePositions.length > 0} onClick={() => overduePositions.length > 0 && onOpenModal("Overdue Positions", overduePositions, false)} />
         <StatCard
@@ -439,25 +497,22 @@ function DashboardTab({ data, isLive, onOpenModal, onOpenDojModal, onOpenOfferMo
         <StatCard
           label="Recently Added Roles"
           value={(() => {
-            const sorted = [...data.openPositions].filter(p => p._receiveDate && !isNaN(new Date(p._receiveDate))).sort((a, b) => new Date(b._receiveDate) - new Date(a._receiveDate));
+            const sorted = [...data.openPositions].filter(p => p._parsedReceive && !isNaN(p._parsedReceive)).sort((a, b) => b._parsedReceive - a._parsedReceive);
             return sorted.slice(0, 5).length;
           })()}
           sub="top 5 most recently received"
           color="#f59e0b" icon="🆕" clickable={true}
           onClick={() => {
-            const sorted = [...data.openPositions].filter(p => p._receiveDate && !isNaN(new Date(p._receiveDate))).sort((a, b) => new Date(b._receiveDate) - new Date(a._receiveDate));
-            const top5 = sorted.slice(0, 5);
-            onOpenModal("Recently Added Roles", top5, false);
+            const sorted = [...data.openPositions].filter(p => p._parsedReceive && !isNaN(p._parsedReceive)).sort((a, b) => b._parsedReceive - a._parsedReceive);
+            onOpenModal("Recently Added Roles", sorted.slice(0, 5), false);
           }}
         />
       </div>
 
-      {/* Centre breakdown — full width, clickable rows */}
       <div style={{ marginBottom: "16px" }}>
         <CentreBreakdown positions={data.openPositions} T={T} onCentreClick={handleCentreClick} />
       </div>
 
-      {/* Pipeline */}
       <div style={{ background: T.card, border: `1px solid ${T.cardBdr}`, borderRadius: "14px", padding: "20px" }}>
         <div style={{ fontSize: "12px", fontWeight: "600", color: T.text, fontFamily: "'Syne',sans-serif", marginBottom: "16px" }}>Hiring Pipeline — Positions by Step</div>
         <div style={{ display: "flex", gap: "8px" }}>
@@ -612,7 +667,7 @@ export default function App() {
   const [isLive, setIsLive] = useState(false);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
-  const [modal, setModal] = useState(null); // { title, positions, showDoj }
+  const [modal, setModal] = useState(null);
   const [time, setTime] = useState(new Date());
   const [offerEntries, setOfferEntries] = useState(null);
 
@@ -630,26 +685,16 @@ export default function App() {
   const openModal = useCallback((title, positions, showDoj = false) => setModal({ title, positions, showDoj }), []);
   const openOfferModal = useCallback((title, entries) => {
     const positions = entries.map((e, i) => ({
-      id: i,
-      name: e.name || "",
-      role: e.role || "",
-      centre: e.centre || "",
-      doj: e.doj || "",
-      joiningStatus: e.joiningStatus || "Offered",
-      remarks: e.remarks || "",
+      id: i, name: e.name || "", role: e.role || "", centre: e.centre || "",
+      doj: e.doj || "", joiningStatus: e.joiningStatus || "Offered", remarks: e.remarks || "",
     }));
     setModal({ title, positions, showOffer: true });
   }, []);
 
   const openDojModal = useCallback((title, entries) => {
-    // Normalise offer entries to have expected fields for DOJ modal
     const positions = entries.map((e, i) => ({
-      id: i,
-      name: e.name || e.offerCandidate || "",
-      role: e.role || "",
-      centre: e.centre || "",
-      doj: e.doj || e.expectedClosure || "",
-      joiningStatus: e.joiningStatus || "Offered",
+      id: i, name: e.name || e.offerCandidate || "", role: e.role || "",
+      centre: e.centre || "", doj: e.doj || e.expectedClosure || "", joiningStatus: e.joiningStatus || "Offered",
     }));
     setModal({ title, positions, showDoj: true });
   }, []);
@@ -721,7 +766,6 @@ export default function App() {
     } catch { return false; }
   };
 
-  // Only dashboard and positions in the nav now
   const tabs = [
     { id: "dashboard", label: "Dashboard",     icon: "⊞", badge: 0 },
     { id: "positions", label: "Open Positions", icon: "◈", badge: 0 },
@@ -732,7 +776,6 @@ export default function App() {
     <div style={{ minHeight: "100vh", background: T.bg, backgroundImage: T.bgGrad, fontFamily: "'DM Sans', sans-serif", color: T.text, display: "flex" }}>
       <style>{`*{box-sizing:border-box}::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:${T.scrollThumb};border-radius:2px}@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}input::placeholder{color:${T.textMuted}}input:focus{border-color:rgba(232,93,58,0.4)!important}`}</style>
 
-      {/* Sidebar */}
       <div style={{ width: "220px", minHeight: "100vh", background: T.sidebar, borderRight: `1px solid ${T.sidebarBdr}`, display: "flex", flexDirection: "column", flexShrink: 0, position: "sticky", top: 0, height: "100vh" }}>
         <Logo T={T} />
         <nav style={{ padding: "14px 10px", flex: 1 }}>
@@ -754,7 +797,6 @@ export default function App() {
         </div>
       </div>
 
-      {/* Main */}
       <div style={{ flex: 1, overflow: "auto", minHeight: "100vh" }}>
         <div style={{ padding: "18px 28px", borderBottom: `1px solid ${T.headerBdr}`, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10, background: T.header, backdropFilter: "blur(12px)" }}>
           <div>
